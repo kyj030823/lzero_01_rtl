@@ -33,16 +33,25 @@ class MacUnit extends Module {
   io.out_a := RegNext(a)
   io.out_prop_w := RegNext(prop_w)
   io.out_valid := RegNext(valid)
-  when(prop_w){
-    io.out_w := RegNext(w1)
-    io.out_c := RegNext(a * w0 + c)
-    w1 := pre_w
-  }.otherwise{
-    io.out_w := RegNext(w0)
-    io.out_c := RegNext(a * w1 + c)
-    w0 := pre_w
-  }
-  when(!valid){
+  io.out_w := RegNext(
+    Mux(prop_w, w1, w0),
+    0.U
+  )
+  io.out_c := RegNext(
+    Mux(
+      prop_w,
+      a * w0 + c,
+      a * w1 + c
+    ),
+    0.U
+  )
+  when(valid) {
+    when(prop_w) {
+      w1 := pre_w
+    }.otherwise {
+      w0 := pre_w
+    }
+  }.otherwise {
     w0 := w0
     w1 := w1
   }

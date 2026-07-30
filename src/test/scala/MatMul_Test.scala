@@ -55,22 +55,31 @@ class MacUnitTest extends AnyFlatSpec with ChiselScalatestTester {
 
 class MatMulUnit_16Test extends AnyFlatSpec with ChiselScalatestTester {
   behavior of "MatMulUnit_16"
-  // test case start
-  it should "correctly (1)load 256 weights at once, (2)multiply two matrix successfully" in {
-    test(new MatMulUnit_16()){ dut =>
+
+  it should "overlap skewed weight loading with two matrix multiplications" in {
+    test(new MatMulUnit_16()).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       val size = 16
       val random = new Random(0)
 
-      // Keep operands small enough that every dot product fits in UInt(16.W).
-      val weight = Array.tabulate(size, size) { (_, _) => random.nextInt(10) }
-      val input  = Array.tabulate(size, size) { (_, _) => random.nextInt(10) }
+      val weight0 = Array.tabulate(size, size) { (_, _) => random.nextInt(10) }
+      val weight1 = Array.tabulate(size, size) { (_, _) => random.nextInt(10) }
+      val input0  = Array.tabulate(size, size) { (_, _) => random.nextInt(10) }
+      val input1  = Array.tabulate(size, size) { (_, _) => random.nextInt(10) }
 
-      val expected = Array.tabulate(size, size) { (r, c) =>
-        (0 until size).map(k => input(r)(k) * weight(k)(c)).sum
+      def matrixMultiply(
+        a: Array[Array[Int]],
+        w: Array[Array[Int]]
+      ): Array[Array[Int]] = {
+        Array.tabulate(size, size) { (r, c) =>
+          (0 until size).map(k => a(r)(k) * w(k)(c)).sum
+        }
       }
-      val actual = Array.fill(size, size)(BigInt(0))
 
-      // Give every input a defined value before the first clock edge.
+      val expected0 = matrixMultiply(input0, weight0)
+      val expected1 = matrixMultiply(input1, weight1)
+      val actual0 = Array.fill(size, size)(BigInt(0))
+      val actual1 = Array.fill(size, size)(BigInt(0))
+
       for (i <- 0 until size) {
         dut.io.in_A(i).poke(0.U)
         dut.io.in_W(i).poke(0.U)
@@ -79,70 +88,56 @@ class MatMulUnit_16Test extends AnyFlatSpec with ChiselScalatestTester {
       }
 
       /*
-       * Preload W into w0. out_w is registered at each MacUnit, so a weight
-       * moves down one row per cycle. Reverse order leaves weight(r)(c) in
-       * MacUnit(r)(c) after 16 cycles.
+       * Global skewed schedule for column/lane c:
+       *
+       *   local  0..15 : load weight0 into w0 (valid=1, prop=0)
+       *   local 16..31 : load weight1 into w1 (valid=1, prop=1)
+       *                  while input0 is multiplied by weight0
+       *   local 32..   : select w1 for input1 MAC (valid=0, prop=0)
+       *
+       * A0 starts at global cycle 16, immediately after MacUnit(0)(0)
+       * receives its final weight0 value. A1 starts 16 cycles later.
        */
-      for (t <- 0 until size) {
-        for (c <- 0 until size) {
-          dut.io.in_W(c).poke(weight(size - 1 - t)(c).U)
-          dut.io.in_Valid(c).poke(true.B)
-          dut.io.in_Prop_W(c).poke(false.B)
-        }
-        dut.clock.step()
-      }
-
-      /*
-       * Drain valid while keeping prop_w low. During this phase, each upper
-       * PE continues forwarding w0, so the trailing valid reaches and stores
-       * the preceding weight in the next PE without overwriting it with w1.
-       */
-      for (_ <- 0 until size) {
-        for (i <- 0 until size) {
-          dut.io.in_A(i).poke(0.U)
-          dut.io.in_W(i).poke(0.U)
-          dut.io.in_Valid(i).poke(false.B)
-          dut.io.in_Prop_W(i).poke(false.B)
-        }
-        dut.clock.step()
-      }
-
-      // After valid has drained completely, select w0 throughout the array.
-      for (_ <- 0 until size) {
-        for (i <- 0 until size) {
-          dut.io.in_A(i).poke(0.U)
-          dut.io.in_W(i).poke(0.U)
-          dut.io.in_Valid(i).poke(false.B)
-          dut.io.in_Prop_W(i).poke(true.B)
-        }
-        dut.clock.step()
-      }
-
-      /*
-       * A(i)(k) is applied at cycle i+k to compensate for the horizontal
-       * register delay while the partial sum travels downward.
-       */
-      val resultLatency = size
+      val a0StartCycle = size
+      val a1StartCycle = 2 * size
       val computeCycles = 3 * size - 1
+      val totalCycles = a1StartCycle + computeCycles
 
-      for (t <- 0 until computeCycles) {
-        for (k <- 0 until size) {
-          val inputRow = t - k
-          val a = if (inputRow >= 0 && inputRow < size) input(inputRow)(k) else 0
+      for (t <- 0 until totalCycles) {
+        for (lane <- 0 until size) {
+          val weightCycle = t - lane
+          val loadingW0 = weightCycle >= 0 && weightCycle < size
+          val loadingW1 = weightCycle >= size && weightCycle < 2 * size
 
-          dut.io.in_A(k).poke(a.U)
-          dut.io.in_W(k).poke(0.U)
-          dut.io.in_Valid(k).poke(false.B)
-          dut.io.in_Prop_W(k).poke(true.B)
+          val w =
+            if (loadingW0) weight0(size - 1 - weightCycle)(lane)
+            else if (loadingW1) weight1(2 * size - 1 - weightCycle)(lane)
+            else 0
+
+          val input0Row = t - a0StartCycle - lane
+          val input1Row = t - a1StartCycle - lane
+          val a =
+            if (input0Row >= 0 && input0Row < size) input0(input0Row)(lane)
+            else if (input1Row >= 0 && input1Row < size) input1(input1Row)(lane)
+            else 0
+
+          dut.io.in_W(lane).poke(w.U)
+          dut.io.in_Valid(lane).poke((loadingW0 || loadingW1).B)
+          dut.io.in_Prop_W(lane).poke(loadingW1.B)
+          dut.io.in_A(lane).poke(a.U)
         }
 
         dut.clock.step()
 
-        // Column c produces row i at compute cycle i + c + size - 1.
         for (c <- 0 until size) {
-          val outputRow = t - (resultLatency - 1) - c
-          if (outputRow >= 0 && outputRow < size) {
-            actual(outputRow)(c) = dut.io.out_MAC(c).peek().litValue
+          val output0Row = t - a0StartCycle - (size - 1) - c
+          val output1Row = t - a1StartCycle - (size - 1) - c
+
+          if (output0Row >= 0 && output0Row < size) {
+            actual0(output0Row)(c) = dut.io.out_MAC(c).peek().litValue
+          }
+          if (output1Row >= 0 && output1Row < size) {
+            actual1(output1Row)(c) = dut.io.out_MAC(c).peek().litValue
           }
         }
       }
@@ -154,19 +149,19 @@ class MatMulUnit_16Test extends AnyFlatSpec with ChiselScalatestTester {
         }
       }
 
-      printMatrix(
-        "EXPECTED OUTPUT",
-        expected.map(_.map(BigInt(_)).toSeq).toSeq
-      )
-      printMatrix(
-        "ACTUAL OUTPUT",
-        actual.map(_.toSeq).toSeq
-      )
+      printMatrix("EXPECTED OUTPUT 0 (A0 x W0)", expected0.map(_.map(BigInt(_)).toSeq).toSeq)
+      printMatrix("ACTUAL OUTPUT 0 (A0 x W0)", actual0.map(_.toSeq).toSeq)
+      printMatrix("EXPECTED OUTPUT 1 (A1 x W1)", expected1.map(_.map(BigInt(_)).toSeq).toSeq)
+      printMatrix("ACTUAL OUTPUT 1 (A1 x W1)", actual1.map(_.toSeq).toSeq)
 
       for (r <- 0 until size; c <- 0 until size) {
         assert(
-          actual(r)(c) == expected(r)(c),
-          s"C($r,$c) mismatch: actual=${actual(r)(c)}, expected=${expected(r)(c)}"
+          actual0(r)(c) == expected0(r)(c),
+          s"C0($r,$c) mismatch: actual=${actual0(r)(c)}, expected=${expected0(r)(c)}"
+        )
+        assert(
+          actual1(r)(c) == expected1(r)(c),
+          s"C1($r,$c) mismatch: actual=${actual1(r)(c)}, expected=${expected1(r)(c)}"
         )
       }
     }
