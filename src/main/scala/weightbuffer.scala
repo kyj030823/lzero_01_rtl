@@ -2,10 +2,11 @@ import chisel3._
 import chisel3.util._
 
 /**
-  * 8 KiB ping-pong weight buffer organized as four banks.
+  * 8 KiB ping-pong weight buffer.
   *
   *   - ping/pong: 4 KiB x 2
-  *   - four banks: 128 x 128 bits per bank
+  *   - 2 buffers x 4 banks x 2 lanes = 16 independent memories
+  *   - each lane: 64 x 64 bits (8 bytes/port)
   *   - DMA write: 16 bytes/bank, 64 bytes/cycle total
   *   - CU read: one bank, 16 bytes/cycle, one-cycle latency
   */
@@ -24,12 +25,14 @@ class WeightBuffer extends Module {
   })
 
   val activeReadBuffer = RegInit(false.B)
-  val banks = Seq.fill(4)(SyncReadMem(128, UInt(128.W)))
+  val banks = Seq.tabulate(2, 4, 2) { (buffer, bank, lane) =>
+    SyncReadMem(64, UInt(64.W))
+      .suggestName(s"wb_b${buffer}_bank${bank}_lane${lane}")
+  }
   val writeAddr = RegInit(0.U(6.W))
   val readAddr  = RegInit(0.U(8.W))
 
-  // load_reset is an address-reset cycle, so no DMA beat is accepted then.
-  val dmaWordAddr = Cat(!activeReadBuffer, writeAddr)
+  val writeBuffer = !activeReadBuffer
 
   io.load_done := io.dma_valid && writeAddr === 63.U
 
@@ -39,23 +42,24 @@ class WeightBuffer extends Module {
     writeAddr := Mux(writeAddr === 63.U, 0.U, writeAddr + 1.U)
   }
 
-  // One DMA beat writes 16 adjacent bytes into each bank.
-  for (bank <- 0 until 4) {
-    val bankWord = VecInit(Seq.tabulate(16) { byte =>
-      io.dma_data(bank * 16 + byte)
+  // A 64-byte DMA beat writes two 8-byte lanes in every logical bank.
+  for (buffer <- 0 until 2; bank <- 0 until 4; lane <- 0 until 2) {
+    val laneWord = VecInit(Seq.tabulate(8) { byte =>
+      io.dma_data(bank * 16 + lane * 8 + byte)
     }).asUInt
 
-    when(io.dma_valid) {
-      banks(bank).write(dmaWordAddr, bankWord)
+    when(io.dma_valid && writeBuffer === (buffer == 1).B) {
+      banks(buffer)(bank)(lane).write(writeAddr, laneWord)
     }
   }
 
-  // read_reset is an address-reset cycle. Consecutive accepted reads visit
-  // banks 0, 1, 2, 3 and then advance the shared word address.
+  // Consecutive reads visit logical banks 0, 1, 2, 3 and then advance
+  // the address shared by the four banks.
   val lastCuRead = io.cu_read_en && readAddr === 255.U
   val selectedBank = readAddr(1, 0)
-  val cuWordAddr = Cat(activeReadBuffer, readAddr(7, 2))
+  val cuWordAddr = readAddr(7, 2)
   val selectedBankReg = RegEnable(selectedBank, 0.U, io.cu_read_en)
+  val selectedBufferReg = RegEnable(activeReadBuffer, false.B, io.cu_read_en)
 
   when(io.read_reset) {
     readAddr := 0.U
@@ -63,19 +67,25 @@ class WeightBuffer extends Module {
     readAddr := Mux(readAddr === 255.U, 0.U, readAddr + 1.U)
   }
 
-  val bankReadData = Seq.tabulate(4) { bank =>
-    banks(bank).read(cuWordAddr, io.cu_read_en && selectedBank === bank.U)
+  val bankReadData = Seq.tabulate(2, 4) { (buffer, bank) =>
+    val readEnable = io.cu_read_en &&
+      activeReadBuffer === (buffer == 1).B && selectedBank === bank.U
+    val lane0 = banks(buffer)(bank)(0).read(cuWordAddr, readEnable)
+    val lane1 = banks(buffer)(bank)(1).read(cuWordAddr, readEnable)
+    Cat(lane1, lane0)
   }
-  val selectedWord = Mux1H(Seq.tabulate(4) { bank =>
-    (selectedBankReg === bank.U) -> bankReadData(bank)
-  })
+
+  val selectedWord = Mux1H(Seq.tabulate(2, 4) { (buffer, bank) =>
+    val selected = selectedBufferReg === (buffer == 1).B &&
+      selectedBankReg === bank.U
+    selected -> bankReadData(buffer)(bank)
+  }.flatten)
 
   io.cu_read_data := selectedWord.asTypeOf(Vec(16, UInt(8.W)))
   io.cu_read_valid := RegNext(io.cu_read_en, false.B)
   io.read_done := RegNext(lastCuRead, false.B)
 
-  // swap performs the initial hand-off. Later read completions switch
-  // automatically to the opposite ping-pong buffer.
+  // Completing all 256 CU reads selects the opposite ping-pong buffer.
   when(lastCuRead) {
     activeReadBuffer := !activeReadBuffer
   }
