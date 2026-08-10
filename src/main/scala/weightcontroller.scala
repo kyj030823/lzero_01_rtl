@@ -136,10 +136,11 @@ class UbWbController(val is_ub: Boolean) extends Module {
     val rd_addr       = Output(UInt(8.W))
     val rd_en         = Output(Bool())
     val active_bank   = Output(UInt(1.W)) // 0: Ping, 1: Pong
+    //데이터를 cu나 lut로 연결
     val rd_data       = Input(UInt(128.W))
     val rd_data_to_cu = Output(UInt(128.W))
     val rd_data_to_lut = if (!is_ub) Some(Output(UInt(128.W))) else None
-
+    //write flag와 주소
     val wr_en         = Output(Bool())
     val wr_addr       = Output(UInt(6.W))
   })
@@ -147,11 +148,15 @@ class UbWbController(val is_ub: Boolean) extends Module {
   val state = RegInit(OcmState.S_IDLE)
   
   val active_bank = RegInit(0.U(1.W))
+  val write_bank  = ~active_bank
   val read_ptr    = RegInit(0.U(8.W))
   val write_ptr   = RegInit(0.U(6.W))
   val compact_cnt = RegInit(0.U(4.W)) // UB 1/16 speed용
+  //마지막 주소에 쓸 때 1로 바뀜 -> 다음 clock에 바로 buffer 전환할 수 있음
   val last_write  = write_ptr === OcmConst.BANK_MAX_WRITES && io.ctrl.dma_data_valid
   val pong_valid  = RegInit(false.B)
+  // lut로 나가야 하는지 buffer 단위로 저장해놓음 0 bit -> ping, 1 bit -> pong
+  val lut_mode_reg = RegInit(VecInit(Seq.fill(2)(false.B)))
 
   when(last_write) { pong_valid := true.B }
 
@@ -180,6 +185,7 @@ class UbWbController(val is_ub: Boolean) extends Module {
           read_ptr := 0.U
           write_ptr := 0.U
           pong_valid := false.B
+          lut_mode_reg(active_bank) := false.B
         }.otherwise {
           state := OcmState.S_STALL
         }
@@ -192,6 +198,7 @@ class UbWbController(val is_ub: Boolean) extends Module {
         read_ptr := 0.U
         write_ptr := 0.U
         pong_valid := false.B
+        lut_mode_reg(active_bank) := false.B
       }
     }
   }
@@ -201,11 +208,22 @@ class UbWbController(val is_ub: Boolean) extends Module {
     active_bank := 0.U
     read_ptr := 0.U
     write_ptr := 0.U
+    lut_mode_reg.foreach(_ := false.B)
   }
 
   // Pointer & Compact Counter Logic
   val is_working = (state === OcmState.S_WORKING)
   val advance_cond = if (is_ub) (!io.compact_mode.get || compact_cnt === 15.U) else true.B
+  //lut_prog_mode가 들어오면 incoming_lut_mode로 받기
+  val incoming_lut_mode = if (is_ub) false.B else io.lut_prog_mode.get
+
+  // buffer를 다 쓸 때까지 lut_mode_reg 유지
+  // incoming_lut_mode가 ture면 write_bank(~active_bank)에 lut_mode_reg를 true로 설정
+  for (bank <- 0 until 2) {
+    when(io.ctrl.dma_data_valid && incoming_lut_mode && write_bank === bank.U) {
+      lut_mode_reg(bank) := true.B
+    }
+  }
   
   when(is_working) {
     if (is_ub) {
@@ -214,7 +232,7 @@ class UbWbController(val is_ub: Boolean) extends Module {
     when(advance_cond) { read_ptr := read_ptr + 1.U }
   }
 
-  // DMA Write 주소 계산
+  // DMA Write 주소 계산(마지막 주소까지 1씩 올리기)
   when(state =/= OcmState.S_IDLE && io.ctrl.dma_data_valid && !(pong_valid || last_write)) {
     write_ptr := write_ptr + 1.U
   }.elsewhen(io.ctrl.dma_data_valid && io.ctrl.dma_data_last) { 
@@ -235,12 +253,13 @@ class UbWbController(val is_ub: Boolean) extends Module {
   io.rd_en       := is_working
   io.active_bank := active_bank
 
+  // bram에서 불러오는데 1cycle 지연이 생기므로 read_lut_mode도 1cycle 지연
+  val read_lut_mode_d1 = RegEnable(lut_mode_reg(active_bank), false.B, io.rd_en)
+
   if (is_ub) {
     io.rd_data_to_cu := io.rd_data
   } else {
-    val lutMode = io.lut_prog_mode.get
-
-    when(lutMode) {
+    when(read_lut_mode_d1) {
       io.rd_data_to_cu := 0.U
       io.rd_data_to_lut.get := io.rd_data
     }.otherwise {
@@ -249,7 +268,7 @@ class UbWbController(val is_ub: Boolean) extends Module {
     }
   }
 
-  // Address 63 is still a real write beat; last_write only marks completion.
+  // write flag와 address 연결
   io.wr_en   := io.ctrl.dma_data_valid && !pong_valid
   io.wr_addr := write_ptr
 }
