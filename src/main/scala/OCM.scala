@@ -121,6 +121,39 @@ class AsymmetricPingPongSRAM(
   io.pong_rd_data := buildAsymmetricBank(io.pong_wr_en, io.pong_wr_addr, io.pong_wr_data, io.pong_rd_en, io.pong_rd_addr)
 }
 
+//vector buffer용 sram
+//4KB SRAM, 16B Read / 16B Write
+// BRAM 2개를 사용하여 각각 8B(64bit)씩 담당. 총 16B 읽고쓰기 가능
+class VbSram extends Module {
+  val io = IO(new Bundle {
+    val wr_en   = Input(Bool())
+    val wr_addr = Input(UInt(8.W))
+    val wr_data = Input(UInt(128.W))
+
+    val rd_en    = Input(Bool())
+    val rd_addr  = Input(UInt(8.W))
+    val rd_data  = Output(UInt(128.W))
+    val rd_valid = Output(Bool())
+  })
+
+  // lane 0 stores bytes 0~7; lane 1 stores bytes 8~15.
+  val lanes = Seq.tabulate(2) { lane =>
+    SyncReadMem(256, UInt(64.W)).suggestName(s"vb_lane$lane")
+  }
+
+  when(io.wr_en) {
+    lanes(0).write(io.wr_addr, io.wr_data(63, 0))
+    lanes(1).write(io.wr_addr, io.wr_data(127, 64))
+  }
+
+  val lane0Read = lanes(0).read(io.rd_addr, io.rd_en)
+  val lane1Read = lanes(1).read(io.rd_addr, io.rd_en)
+
+  io.rd_data  := Cat(lane1Read, lane0Read)
+  io.rd_valid := RegNext(io.rd_en, false.B)
+}
+
+
 // ====================================================================
 // [1] UB / WB Controller (Front-end: Push 패러다임)
 // ====================================================================
@@ -148,15 +181,12 @@ class UbWbController(val is_ub: Boolean) extends Module {
   val state = RegInit(OcmState.S_IDLE)
   
   val active_bank = RegInit(0.U(1.W))
-  val write_bank  = ~active_bank
   val read_ptr    = RegInit(0.U(8.W))
   val write_ptr   = RegInit(0.U(6.W))
   val compact_cnt = RegInit(0.U(4.W)) // UB 1/16 speed용
   //마지막 주소에 쓸 때 1로 바뀜 -> 다음 clock에 바로 buffer 전환할 수 있음
   val last_write  = write_ptr === OcmConst.BANK_MAX_WRITES && io.ctrl.dma_data_valid
   val pong_valid  = RegInit(false.B)
-  // lut로 나가야 하는지 buffer 단위로 저장해놓음 0 bit -> ping, 1 bit -> pong
-  val lut_mode_reg = RegInit(VecInit(Seq.fill(2)(false.B)))
 
   when(last_write) { pong_valid := true.B }
 
@@ -185,7 +215,6 @@ class UbWbController(val is_ub: Boolean) extends Module {
           read_ptr := 0.U
           write_ptr := 0.U
           pong_valid := false.B
-          lut_mode_reg(active_bank) := false.B
         }.otherwise {
           state := OcmState.S_STALL
         }
@@ -198,7 +227,6 @@ class UbWbController(val is_ub: Boolean) extends Module {
         read_ptr := 0.U
         write_ptr := 0.U
         pong_valid := false.B
-        lut_mode_reg(active_bank) := false.B
       }
     }
   }
@@ -208,22 +236,12 @@ class UbWbController(val is_ub: Boolean) extends Module {
     active_bank := 0.U
     read_ptr := 0.U
     write_ptr := 0.U
-    lut_mode_reg.foreach(_ := false.B)
   }
 
   // Pointer & Compact Counter Logic
   val is_working = (state === OcmState.S_WORKING)
   val advance_cond = if (is_ub) (!io.compact_mode.get || compact_cnt === 15.U) else true.B
-  //lut_prog_mode가 들어오면 incoming_lut_mode로 받기
-  val incoming_lut_mode = if (is_ub) false.B else io.lut_prog_mode.get
 
-  // buffer를 다 쓸 때까지 lut_mode_reg 유지
-  // incoming_lut_mode가 ture면 write_bank(~active_bank)에 lut_mode_reg를 true로 설정
-  for (bank <- 0 until 2) {
-    when(io.ctrl.dma_data_valid && incoming_lut_mode && write_bank === bank.U) {
-      lut_mode_reg(bank) := true.B
-    }
-  }
   
   when(is_working) {
     if (is_ub) {
@@ -253,13 +271,13 @@ class UbWbController(val is_ub: Boolean) extends Module {
   io.rd_en       := is_working
   io.active_bank := active_bank
 
-  // bram에서 불러오는데 1cycle 지연이 생기므로 read_lut_mode도 1cycle 지연
-  val read_lut_mode_d1 = RegEnable(lut_mode_reg(active_bank), false.B, io.rd_en)
 
   if (is_ub) {
     io.rd_data_to_cu := io.rd_data
   } else {
-    when(read_lut_mode_d1) {
+    val lutMode = io.lut_prog_mode.get
+
+    when(lutMode) {
       io.rd_data_to_cu := 0.U
       io.rd_data_to_lut.get := io.rd_data
     }.otherwise {
@@ -272,3 +290,62 @@ class UbWbController(val is_ub: Boolean) extends Module {
   io.wr_en   := io.ctrl.dma_data_valid && !pong_valid
   io.wr_addr := write_ptr
 }
+
+class VbController extends Module {
+  val io = IO(new Bundle {
+    val ctrl          = new OcmCommonIo()
+    val fusion_req_in = Input(Bool()) // In-band 태그 (VPU 진입 1클럭 전)
+    
+    val rd_addr       = Output(UInt(8.W))
+    val rd_en         = Output(Bool())
+
+    val wr_en         = Output(Bool())
+    val wr_addr       = Output(UInt(8.W))
+    val wr_valid      = Input(Bool())
+    val last_write    = Input(Bool())
+  })
+
+  val state       = RegInit(OcmState.S_IDLE)
+  val read_ptr    = RegInit(0.U(8.W))
+  val write_ptr  = RegInit(0.U(8.W))
+
+  val is_working = (state === OcmState.S_WORKING)
+
+  switch(state) {
+    is(OcmState.S_IDLE)    { when(io.ctrl.enable && !io.ctrl.soft_reset) { state := OcmState.S_PRELOAD } }
+    is(OcmState.S_PRELOAD) { 
+      when(io.wr_valid) { 
+        write_ptr := write_ptr + 1.U
+        when(io.last_write) { 
+          state := OcmState.S_READY 
+        } 
+      }
+    }
+    is(OcmState.S_READY)   { when(io.fusion_req_in) { state := OcmState.S_WORKING } } // shoot 대신 In-band tag 사용
+    is(OcmState.S_WORKING) {
+      when(io.fusion_req_in) {
+        read_ptr := read_ptr + 1.U
+        //데이터가 256개가 들어오면 write_ptr = 0, read_ptr = 255가 될때까지 읽음
+        when(read_ptr === write_ptr - 1.U) {
+          read_ptr := 0.U
+          write_ptr := 0.U
+          when(io.ctrl.enable) { state := OcmState.S_PRELOAD }.otherwise { state := OcmState.S_IDLE }
+        }
+      }
+    }
+  }
+  when(io.ctrl.soft_reset) { state := OcmState.S_IDLE; read_ptr := 0.U; write_ptr := 0.U }
+
+  io.ctrl.working   := is_working
+  io.ctrl.ready     := (state === OcmState.S_READY) || !io.ctrl.enable
+  io.ctrl.hungry    := 0.U
+  io.ctrl.impending := 0.U
+
+  io.rd_addr     := read_ptr
+  // 1-Cycle Lookahead: 외부에서 fusion_req_in을 찌르면 즉시 rd_en 활성화
+  io.rd_en       := is_working && io.fusion_req_in
+
+  io.wr_en       := io.wr_valid && state === OcmState.S_PRELOAD
+  io.wr_addr     := write_ptr
+}
+
