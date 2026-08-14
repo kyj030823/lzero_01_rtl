@@ -333,7 +333,6 @@ class VbController extends Module {
         read_ptr := read_ptr + 1.U
         when(read_ptr === last_write_ptr) {
           read_ptr := 0.U
-          last_write_ptr := 0.U
         }
       }
     }
