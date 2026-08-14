@@ -6,7 +6,7 @@ import chisel3.util._
 /** Connects VbController's address control to the 4 KiB VbSram. */
 class VbControllerWithSram extends Module {
   val io = IO(new Bundle {
-    val ctrl          = new OcmCommonIo()
+    val ctrl          = new VbCtrlIo()
     val fusion_req_in = Input(Bool())
 
     val wr_valid   = Input(Bool())
@@ -22,10 +22,6 @@ class VbControllerWithSram extends Module {
 
   controller.io.ctrl.soft_reset      := io.ctrl.soft_reset
   controller.io.ctrl.enable          := io.ctrl.enable
-  controller.io.ctrl.shoot           := io.ctrl.shoot
-  controller.io.ctrl.dma_data_valid  := io.ctrl.dma_data_valid
-  controller.io.ctrl.dma_data_last   := io.ctrl.dma_data_last
-  controller.io.ctrl.dma_write_ready := io.ctrl.dma_write_ready
   controller.io.fusion_req_in        := io.fusion_req_in
   controller.io.wr_valid             := io.wr_valid
   controller.io.last_write           := io.last_write
@@ -36,9 +32,6 @@ class VbControllerWithSram extends Module {
   sram.io.rd_en   := controller.io.rd_en
   sram.io.rd_addr := controller.io.rd_addr
 
-  io.ctrl.ready     := controller.io.ctrl.ready
-  io.ctrl.hungry    := controller.io.ctrl.hungry
-  io.ctrl.impending := controller.io.ctrl.impending
   io.ctrl.working   := controller.io.ctrl.working
   io.rd_data        := sram.io.rd_data
   io.rd_valid       := sram.io.rd_valid

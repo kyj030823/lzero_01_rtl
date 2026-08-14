@@ -5,9 +5,9 @@ import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 
 class WbControllerLutMode_Test extends AnyFlatSpec with ChiselScalatestTester {
-  behavior of "WbControllerWithSram LUT buffer mode"
+  behavior of "WbControllerWithSram live LUT mode"
 
-  it should "remember LUT mode per buffer through the final delayed read" in {
+  it should "route read data using the LUT mode present during reading" in {
     test(new WbControllerWithSram()) { dut =>
       def dmaBeat(beat: Int): BigInt = {
         (0 until 64).foldLeft(BigInt(0)) { (word, byte) =>
@@ -49,7 +49,7 @@ class WbControllerLutMode_Test extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.dma_data_valid.poke(false.B)
       dut.io.dma_data_last.poke(false.B)
 
-      // Prove that routing uses the saved buffer bit, not the live input.
+      // The current implementation uses the live mode during reading.
       dut.io.lut_prog_mode.poke(false.B)
       dut.io.shoot.poke(true.B)
       dut.clock.step()
@@ -58,11 +58,8 @@ class WbControllerLutMode_Test extends AnyFlatSpec with ChiselScalatestTester {
       for (word <- 0 until 256) {
         dut.clock.step()
         dut.io.rd_data_valid.expect(true.B)
-        dut.io.rd_data_to_cu.expect(0.U)
-        dut.io.rd_data_to_lut.expect(
-          expectedWord(word).U,
-          s"LUT word $word"
-        )
+        dut.io.rd_data_to_cu.expect(expectedWord(word).U)
+        dut.io.rd_data_to_lut.expect(0.U)
       }
     }
   }

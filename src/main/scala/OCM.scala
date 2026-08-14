@@ -231,7 +231,7 @@ class UbWbController(val is_ub: Boolean) extends Module {
     }
   }
 
-  when(io.ctrl.soft_reset) {
+  when(io.ctrl.soft_reset || !io.ctrl.enable) {
     state := OcmState.S_IDLE
     active_bank := 0.U
     read_ptr := 0.U
@@ -291,9 +291,15 @@ class UbWbController(val is_ub: Boolean) extends Module {
   io.wr_addr := write_ptr
 }
 
+class VbCtrlIo extends Bundle {
+  val soft_reset = Input(Bool())
+  val enable     = Input(Bool())
+  val working    = Output(Bool())
+}
+
 class VbController extends Module {
   val io = IO(new Bundle {
-    val ctrl          = new OcmCommonIo()
+    val ctrl          = new VbCtrlIo()
     val fusion_req_in = Input(Bool()) // In-band 태그 (VPU 진입 1클럭 전)
     
     val rd_addr       = Output(UInt(8.W))
@@ -308,44 +314,38 @@ class VbController extends Module {
   val state       = RegInit(OcmState.S_IDLE)
   val read_ptr    = RegInit(0.U(8.W))
   val write_ptr  = RegInit(0.U(8.W))
+  val last_write_ptr = RegInit(0.U(8.W))
 
   val is_working = (state === OcmState.S_WORKING)
 
   switch(state) {
-    is(OcmState.S_IDLE)    { when(io.ctrl.enable && !io.ctrl.soft_reset) { state := OcmState.S_PRELOAD } }
-    is(OcmState.S_PRELOAD) { 
+    is(OcmState.S_IDLE)    { when(io.ctrl.enable && !io.ctrl.soft_reset) { state := OcmState.S_WORKING } }
+    is(OcmState.S_WORKING) {
       when(io.wr_valid) { 
+        //직전 write_ptr 저장
+        last_write_ptr := write_ptr
         write_ptr := write_ptr + 1.U
-        when(io.last_write) { 
-          state := OcmState.S_READY 
+        when(io.last_write) {
+          write_ptr := 0.U
         } 
       }
-    }
-    is(OcmState.S_READY)   { when(io.fusion_req_in) { state := OcmState.S_WORKING } } // shoot 대신 In-band tag 사용
-    is(OcmState.S_WORKING) {
       when(io.fusion_req_in) {
         read_ptr := read_ptr + 1.U
-        //데이터가 256개가 들어오면 write_ptr = 0, read_ptr = 255가 될때까지 읽음
-        when(read_ptr === write_ptr - 1.U) {
+        when(read_ptr === last_write_ptr) {
           read_ptr := 0.U
-          write_ptr := 0.U
-          when(io.ctrl.enable) { state := OcmState.S_PRELOAD }.otherwise { state := OcmState.S_IDLE }
+          last_write_ptr := 0.U
         }
       }
     }
   }
-  when(io.ctrl.soft_reset) { state := OcmState.S_IDLE; read_ptr := 0.U; write_ptr := 0.U }
+  when(io.ctrl.soft_reset || !io.ctrl.enable) { state := OcmState.S_IDLE; read_ptr := 0.U; write_ptr := 0.U; last_write_ptr := 0.U }
 
   io.ctrl.working   := is_working
-  io.ctrl.ready     := (state === OcmState.S_READY) || !io.ctrl.enable
-  io.ctrl.hungry    := 0.U
-  io.ctrl.impending := 0.U
 
   io.rd_addr     := read_ptr
   // 1-Cycle Lookahead: 외부에서 fusion_req_in을 찌르면 즉시 rd_en 활성화
   io.rd_en       := is_working && io.fusion_req_in
 
-  io.wr_en       := io.wr_valid && state === OcmState.S_PRELOAD
+  io.wr_en       := io.wr_valid && state === OcmState.S_WORKING
   io.wr_addr     := write_ptr
 }
-
