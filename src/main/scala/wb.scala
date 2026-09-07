@@ -10,6 +10,7 @@ class WbControllerWithSram extends Module {
     val enable        = Input(Bool())
     val shoot         = Input(Bool())
     val lut_prog_mode = Input(Bool())
+    val rlast         = Input(Bool())
 
     val dma_data        = Input(UInt(512.W))
     val dma_data_valid  = Input(Bool())
@@ -20,10 +21,21 @@ class WbControllerWithSram extends Module {
     val hungry    = Output(Bool())
     val impending = Output(Bool())
     val working   = Output(Bool())
+    val write_buffer_has_space = Output(Bool())
+    val full = Output(Bool())
+    val dma_last_data_out = Output(Bool())
 
     val rd_data_to_cu  = Output(UInt(128.W))
     val rd_data_to_lut = Output(UInt(128.W))
     val rd_data_valid  = Output(Bool())
+
+    // Debug-only visibility for tests: which physical SRAM bank receives DMA writes.
+    val dbg_ping_wr_en   = Output(Bool())
+    val dbg_pong_wr_en   = Output(Bool())
+    val dbg_ping_wr_addr = Output(UInt(7.W))
+    val dbg_pong_wr_addr = Output(UInt(7.W))
+    val dbg_ping_wr_data = Output(UInt(512.W))
+    val dbg_pong_wr_data = Output(UInt(512.W))
   })
 
   val controller = Module(new UbWbController(is_ub = false))
@@ -32,10 +44,11 @@ class WbControllerWithSram extends Module {
   controller.io.ctrl.soft_reset      := io.soft_reset
   controller.io.ctrl.enable          := io.enable
   controller.io.ctrl.shoot           := io.shoot
+  controller.io.ctrl.rlast           := io.rlast
   controller.io.ctrl.dma_data_valid  := io.dma_data_valid
   controller.io.ctrl.dma_data_last   := io.dma_data_last
   controller.io.ctrl.dma_write_ready := io.dma_write_ready
-  controller.io.lut_prog_mode.get    := io.lut_prog_mode
+  controller.io.is_lut_load.get      := io.lut_prog_mode
 
   val readPing  = controller.io.active_bank === 0.U
   val writePing = !readPing
@@ -66,7 +79,17 @@ class WbControllerWithSram extends Module {
   io.hungry         := controller.io.ctrl.hungry
   io.impending      := controller.io.ctrl.impending
   io.working        := controller.io.ctrl.working
-  io.rd_data_to_cu  := controller.io.rd_data_to_cu
-  io.rd_data_to_lut := controller.io.rd_data_to_lut.get
+  io.write_buffer_has_space := io.hungry
+  io.full := controller.io.ctrl.full
+  io.dma_last_data_out := io.dma_data_valid && io.dma_data_last
+  io.rd_data_to_cu  := controller.io.mxu_data_out
+  io.rd_data_to_lut := controller.io.lut_data_out.get
   io.rd_data_valid  := RegNext(controller.io.rd_en, false.B)
+
+  io.dbg_ping_wr_en   := sram.io.ping_wr_en
+  io.dbg_pong_wr_en   := sram.io.pong_wr_en
+  io.dbg_ping_wr_addr := sram.io.ping_wr_addr
+  io.dbg_pong_wr_addr := sram.io.pong_wr_addr
+  io.dbg_ping_wr_data := sram.io.ping_wr_data
+  io.dbg_pong_wr_data := sram.io.pong_wr_data
 }
