@@ -122,16 +122,8 @@ class DmaScheduler extends Module {
     io.ub_status.hungry && ubNotFull,
     io.wb_status.hungry && wbNotFull,
     io.fb_status.hungry && fbNotFull,
-    io.nb_status.hungry && nbNotFull,
+    (io.nb_status.hungry || io.nb_status.starving) && nbNotFull,
     io.pb_status.hungry && pbNotFull
-  )
-
-  val starvingReq = Seq(
-    false.B,
-    false.B,
-    false.B,
-    io.nb_status.starving && nbNotFull,
-    false.B
   )
 
   val notFullReq = Seq(
@@ -147,16 +139,14 @@ class DmaScheduler extends Module {
 
   val (impendingValid, impendingGrant) = pickFixed(impendingReq)
   val (hungryValid, hungryGrant)       = pickRoundRobin(hungryReq, hungryRrPtr)
-  val (starvingValid, starvingGrant)   = pickFixed(starvingReq)
   val (notFullValid, notFullGrant)     = pickRoundRobin(notFullReq, notFullRrPtr)
 
   val selectHungry   = !impendingValid && hungryValid
-  val selectNotFull  = !impendingValid && !hungryValid && !starvingValid && notFullValid
+  val selectNotFull  = !impendingValid && !hungryValid && notFullValid
 
-  val selectedValid = impendingValid || hungryValid || starvingValid || notFullValid
+  val selectedValid = impendingValid || hungryValid || notFullValid
   val selectedGrant = Mux(impendingValid, impendingGrant,
-                      Mux(hungryValid, hungryGrant,
-                      Mux(starvingValid, starvingGrant, notFullGrant)))
+                      Mux(hungryValid, hungryGrant, notFullGrant))
 
   io.target_ocm := selectedGrant
   io.trigger    := io.tl_gen_ready && selectedValid

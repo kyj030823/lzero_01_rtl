@@ -1,5 +1,5 @@
 $date
-2026-09-07T02:07+0000
+2026-09-07T02:29+0000
 $end
 $version
 0.2
@@ -33,33 +33,30 @@ $scope module DmaScheduler $end
  $var wire 1 6 io_pb_status_full $end
  $var wire 1 7 selectedValid $end
  $var wire 3 8 hungryRrPtr $end
- $var wire 1 9 starvingReq_3 $end
- $var wire 1 : io_ub_status_impending $end
- $var wire 1 ; io_nb_status_full $end
- $var wire 1 < io_nb_status_hungry $end
- $var wire 1 = selectHungry $end
- $var wire 1 > io_tl_gen_ready $end
- $var wire 1 ? pbNotFull $end
- $var wire 1 @ io_pb_status_impending $end
- $var wire 3 A io_target_ocm $end
- $var wire 1 B selectNotFull $end
- $var wire 1 C wbNotFull $end
- $var wire 1 D notFullValid $end
- $var wire 1 E hungryReq_3 $end
- $var wire 1 F hungryReq_2 $end
- $var wire 1 G starvingValid $end
- $var wire 1 H hungryReq_4 $end
- $var wire 1 I clock $end
- $var wire 1 J hungryReq_1 $end
- $var wire 1 K hungryReq_0 $end
- $var wire 1 L io_trigger $end
- $var wire 1 M io_fb_status_impending $end
- $var wire 3 N impendingGrant $end
- $var wire 1 O hungryValid $end
- $var wire 3 P notFullGrant $end
- $var wire 3 Q starvingGrant $end
- $var wire 1 R io_wb_status_full $end
- $var wire 1 S io_ub_status_full $end
+ $var wire 1 9 io_ub_status_impending $end
+ $var wire 1 : io_nb_status_full $end
+ $var wire 1 ; io_nb_status_hungry $end
+ $var wire 1 < selectHungry $end
+ $var wire 1 = io_tl_gen_ready $end
+ $var wire 1 > pbNotFull $end
+ $var wire 1 ? io_pb_status_impending $end
+ $var wire 3 @ io_target_ocm $end
+ $var wire 1 A selectNotFull $end
+ $var wire 1 B wbNotFull $end
+ $var wire 1 C notFullValid $end
+ $var wire 1 D hungryReq_3 $end
+ $var wire 1 E hungryReq_2 $end
+ $var wire 1 F hungryReq_4 $end
+ $var wire 1 G clock $end
+ $var wire 1 H hungryReq_1 $end
+ $var wire 1 I hungryReq_0 $end
+ $var wire 1 J io_trigger $end
+ $var wire 1 K io_fb_status_impending $end
+ $var wire 3 L impendingGrant $end
+ $var wire 1 M hungryValid $end
+ $var wire 3 N notFullGrant $end
+ $var wire 1 O io_wb_status_full $end
+ $var wire 1 P io_ub_status_full $end
 $upscope $end
 $enddefinitions $end
 $dumpvars
@@ -77,7 +74,7 @@ $dumpvars
 0=
 0>
 0?
-0@
+0A
 0B
 0C
 0D
@@ -88,17 +85,14 @@ $dumpvars
 0I
 0J
 0K
-0L
 0M
 0O
-0R
-0S
+0P
 b000 N
-b000 Q
-b000 P
+b000 L
 b000 8
 b000 2
-b000 A
+b000 @
 b000 '
 b000 /
 0!
@@ -117,51 +111,51 @@ b000 /
 $end
 #0
 1!
+1A
 1B
 1C
-1D
 17
 1*
 1,
 1.
-1?
+1>
 #1
-1I
+1G
 #6
 0!
+0A
 0B
 0C
-0D
-0I
+0G
 0*
 1,
 0.
+1O
+1P
 11
-1R
-1S
 16
 07
-1;
-0?
+1:
+0>
 #11
-1I
+1G
 #16
-0I
+0G
 #21
-1I
+1G
 #26
+1B
 1C
 1D
 1E
 1F
+0G
 1H
-0I
+1I
 1J
-1K
-1L
-1O
-0R
-0S
+1M
+0O
+0P
 1!
 1(
 1)
@@ -173,16 +167,16 @@ $end
 15
 06
 17
-0;
+0:
+1;
 1<
 1=
 1>
-1?
 #31
-b001 A
+b001 @
 b001 2
+1G
 b001 8
-1I
 b001 /
 #36
-0I
+0G
