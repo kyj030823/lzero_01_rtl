@@ -3,63 +3,126 @@ package npu.core.memory
 import chisel3._
 import chisel3.util._
 
-/**
- * WB controller using four logical 4KB slots as a circular queue.
- *
- * slot 0: Ping addr 0..63   / read addr 0..255
- * slot 1: Ping addr 64..127 / read addr 256..511
- * slot 2: Pong addr 0..63   / read addr 0..255
- * slot 3: Pong addr 64..127 / read addr 256..511
- *
- * i points to the slot currently being written.
- * j points to the slot currently being read.
- */
-class WbController extends Module {
+
+
+class AsymmetricSRAM(
+  val writeWidthBytes: Int = 64,
+  val readWidthBytes: Int = 16,
+  val capacityBytes: Int = 4096 * 4
+) extends Module {
+  val writeWidth = writeWidthBytes * 8
+  val readWidth  = readWidthBytes * 8
+  val ratio      = writeWidth / readWidth
+  val writeDepth = capacityBytes / writeWidthBytes
+  val readDepth  = capacityBytes / readWidthBytes
+
+  val io = IO(new Bundle {
+    val wr_en   = Input(Bool())
+    val wr_addr = Input(UInt(log2Ceil(writeDepth).W))
+    val wr_data = Input(UInt(writeWidth.W))
+
+    val rd_en   = Input(Bool())
+    val rd_addr = Input(UInt(log2Ceil(readDepth).W))
+    val rd_data = Output(UInt(readWidth.W))
+  })
+
+  val subBanks = Seq.fill(ratio)(SyncReadMem(writeDepth, UInt(readWidth.W)))
+  val rdDataVec = Wire(Vec(ratio, UInt(readWidth.W)))
+
+  val wordAddr = io.rd_addr(log2Ceil(readDepth) - 1, log2Ceil(ratio))
+  val bankSel = io.rd_addr(log2Ceil(ratio) - 1, 0)
+
+  for (i <- 0 until ratio) {
+    val sliceData = io.wr_data((i + 1) * readWidth - 1, i * readWidth)
+    when(io.wr_en) {
+      subBanks(i).write(io.wr_addr, sliceData)
+    }
+    rdDataVec(i) := subBanks(i).read(wordAddr, io.rd_en && bankSel === i.U)
+  }
+
+  val bankSelD1 = RegEnable(bankSel, 0.U, io.rd_en)
+  io.rd_data := rdDataVec(bankSelD1)
+}
+
+class WbController(
+  val writeWidthBytes: Int = 64,
+  val readWidthBytes: Int = 16,
+  val capacityBytes: Int = 4096 * 4,
+  val dataBlockBytes: Int = 4096
+) extends Module {
+  val writeWidth = writeWidthBytes * 8
+  val readWidth  = readWidthBytes * 8
+  val writeDepth = capacityBytes / writeWidthBytes
+  val readDepth  = capacityBytes / readWidthBytes
+
   val io = IO(new Bundle {
     val ctrl = new OcmCommonIo()
 
-    val lut_prog_mode = Input(Bool())
+    val is_lut_load = Input(Bool())
 
-    val rd_addr       = Output(UInt(9.W))
+    val rd_addr       = Output(UInt(log2Ceil(readDepth).W))
     val rd_en         = Output(Bool())
-    val active_bank   = Output(UInt(1.W))
-    val rd_data       = Input(UInt(128.W))
-    val rd_data_to_cu = Output(UInt(128.W))
-    val rd_data_to_lut = Output(UInt(128.W))
+    val rd_data       = Input(UInt(readWidth.W))
+    val rd_data_to_cu = Output(UInt(readWidth.W))
+    val rd_data_to_lut = Output(UInt(readWidth.W))
 
     val wr_en         = Output(Bool())
-    val wr_addr       = Output(UInt(7.W))
-    val write_bank    = Output(UInt(1.W))
+    val wr_addr       = Output(UInt(log2Ceil(writeDepth).W))
   })
 
+  // state와 state상태 변수
   val state = RegInit(OcmState.S_IDLE)
-
-  val i = RegInit(0.U(2.W))
-  val j = RegInit(0.U(2.W))
-
-  val writePtr = RegInit(0.U(6.W))
-  val readPtr  = RegInit(0.U(8.W))
-  val validCnt = RegInit(0.U(3.W))
-  val gotDmaLast = RegInit(false.B)
-
-  val isIdle    = state === OcmState.S_IDLE
-  val isReady   = state === OcmState.S_READY
+  val isIdle = state === OcmState.S_IDLE
+  val isReady = state === OcmState.S_READY
   val isWorking = state === OcmState.S_WORKING
 
-  val queueFull  = validCnt === 4.U
-  val queueEmpty = validCnt === 0.U
+  // Circular-buffer 포인터
+  val writePtr = RegInit(0.U(log2Ceil(writeDepth).W))
+  val readPtr = RegInit(0.U(log2Ceil(readDepth).W))
+  val isempty = RegInit(true.B)
 
-  val readActive = isWorking && !queueEmpty
-  val readLast   = readActive && readPtr === 255.U
+  // block단위를 관리하는 큐(원형 큐)
+  val blockLastqueue = RegInit(VecInit(Seq.fill(capacityBytes / dataBlockBytes * 2)(0.U(log2Ceil(writeDepth).W))))
+  val blFront = RegInit(0.U(log2Ceil(capacityBytes / dataBlockBytes * 2).W))
+  val blNum = RegInit(0.U(log2Ceil(capacityBytes / dataBlockBytes * 2).W))
+  val hasBlockData = blNum > 1.U
 
-  val writeActive = !isIdle && io.ctrl.dma_data_valid && (!queueFull || readLast)
-  val writeLast   = writeActive && (io.ctrl.rlast || io.ctrl.dma_data_last || writePtr === 63.U)
+  // DMA progress and routing
+  val gotDmaLast = RegInit(false.B)
+  val dataToLut = RegInit(false.B)
+  val dataToLutD1 = RegNext(dataToLut, false.B)
 
-  val writeSlotBank = i(1)
-  val writeSlotBase = i(0)
-  val readSlotBank  = j(1)
-  val readSlotBase  = j(0)
+  //lut data가 들어오면 이전 blockLastqueue index에 1 표시. 다음 block이 lut data인 것을 표시하기 위함. 만약 이전 block이 없다면 바로 lut mode로 전환
+  val nextBlockIsLut = RegInit(VecInit(Seq.fill(capacityBytes / dataBlockBytes * 2)(false.B)))
+  when(io.is_lut_load) {
+    when(blNum > 0.U) {
+      nextBlockIsLut(blFront + blNum - 1.U) := true.B
+    }.otherwise {
+      dataToLut := true.B
+    }
+  }
 
+  // 빈공간과 사용공간 확인 변수 & 큐 상태 확인
+  val ptrBits = log2Ceil(capacityBytes)
+  val writeBytePtr = writePtr << log2Ceil(writeWidthBytes)
+  val readBytePtr  = readPtr  << log2Ceil(readWidthBytes)
+  val emptyBytes = (readBytePtr -% writeBytePtr)(ptrBits - 1, 0)
+  val usedBytes = (writeBytePtr -% readBytePtr)(ptrBits - 1, 0)
+  val soonempty =  (usedBytes =/= 0.U) && (usedBytes <= (16 * 8).U)
+  val queueFull = emptyBytes < dataBlockBytes.U && !isempty
+
+  // 읽기 쓰기 마지막 상태 관련 변수
+  val writeActive = io.ctrl.dma_data_valid && !isIdle
+  val writeLast = (io.ctrl.rlast || io.ctrl.dma_data_last) && io.ctrl.dma_data_valid
+  // writeptr에 readptr과 bit가 맞도록 1을 채워서 비교. blnum으로 실제 block이 존재할때만 ture
+  val readLast = readPtr === Cat(blockLastqueue(blFront),Fill(readPtr.getWidth - blockLastqueue(blFront).getWidth, 1.U(1.W))) && blNum > 0.U
+  val blpop = isWorking && readLast
+  val blpush = writeActive && writeLast
+
+  // readLast 지연
+  val readLastD1 = RegNext(isWorking && readLast, false.B)
+
+  // FSM
   switch(state) {
     is(OcmState.S_IDLE) {
       when(io.ctrl.enable && !io.ctrl.soft_reset) {
@@ -81,68 +144,85 @@ class WbController extends Module {
 
     is(OcmState.S_WORKING) {
       when(readLast) {
-        when(validCnt > 1.U || writeLast) {
+        //다음 block이 존재하거나 막 block 끝이 들어왔을 때
+        when(hasBlockData || blpush) {
           state := OcmState.S_WORKING
-        }.otherwise {
-          state := OcmState.S_STALL
+          }.otherwise {
+          when (gotDmaLast) {
+            state := OcmState.S_IDLE
+          }.otherwise {
+            state := OcmState.S_STALL
+          }
         }
       }
     }
 
     is(OcmState.S_STALL) {
-      when(writeLast) {
+      when(writeActive) {
         state := OcmState.S_WORKING
       }
     }
   }
 
+  // 쓰기 시
   when(writeActive) {
+    writePtr := writePtr + 1.U
     when(writeLast) {
-      writePtr := 0.U
-      i := i + 1.U
-    }.otherwise {
-      writePtr := writePtr + 1.U
+      blockLastqueue(blFront + blNum) := writePtr
     }
-
     when(io.ctrl.dma_data_last) {
       gotDmaLast := true.B
-    }
-  }
-
-  when(readActive) {
-    when(readLast) {
-      readPtr := 0.U
-      j := j + 1.U
     }.otherwise {
-      readPtr := readPtr + 1.U
+      gotDmaLast := false.B
+    }
+    isempty := false.B
+  }
+
+  // 읽기 시
+  when(isWorking) {
+    readPtr := readPtr + 1.U
+    // readLast는 readPtr이 blocklastdata에 도달했을때 true
+    when(readLast) {
+      blFront := blFront + 1.U
+      dataToLut := nextBlockIsLut(blFront)
+      nextBlockIsLut(blFront) := false.B
+    }
+    when((usedBytes === readWidthBytes.U) && !writeActive) {
+      isempty := true.B
     }
   }
 
-  when(writeLast && !readLast) {
-    validCnt := validCnt + 1.U
-  }.elsewhen(readLast && !writeLast) {
-    validCnt := validCnt - 1.U
+  // block 큐 관리
+  when(blpush && !blpop) {
+    blNum := blNum + 1.U
+  }.elsewhen(blpop && !blpush) {
+    blNum := blNum - 1.U
   }
 
+  // 리셋
   when(io.ctrl.soft_reset || !io.ctrl.enable) {
     state := OcmState.S_IDLE
-    i := 0.U
-    j := 0.U
-    writePtr := 0.U
-    readPtr := 0.U
-    validCnt := 0.U
-    gotDmaLast := false.B
   }
 
+  when(state === OcmState.S_IDLE || io.ctrl.soft_reset || !io.ctrl.enable) {
+    writePtr := 0.U
+    readPtr := 0.U
+    blFront := 0.U
+    blNum := 0.U
+    gotDmaLast := false.B
+    isempty := true.B
+    dataToLut := false.B
+  }
+
+  // SRAM outputs
   io.wr_en := writeActive
-  io.wr_addr := Cat(writeSlotBase, writePtr)
-  io.write_bank := writeSlotBank
+  io.wr_addr := writePtr
 
-  io.rd_en := readActive
-  io.rd_addr := Cat(readSlotBase, readPtr)
-  io.active_bank := readSlotBank
+  io.rd_en := isWorking
+  io.rd_addr := readPtr
 
-  when(io.lut_prog_mode) {
+  // Read-data routing
+  when(dataToLutD1) {
     io.rd_data_to_cu := 0.U
     io.rd_data_to_lut := io.rd_data
   }.otherwise {
@@ -150,102 +230,10 @@ class WbController extends Module {
     io.rd_data_to_lut := 0.U
   }
 
-  io.ctrl.working := isWorking
+  // Controller status outputs
   io.ctrl.ready := isReady || !io.ctrl.enable
-  io.ctrl.hungry := !isIdle && !queueFull
-  io.ctrl.impending := isWorking && validCnt <= 1.U && !queueFull
-  io.ctrl.full := validCnt > 1.U
-  io.ctrl.last_data_out := gotDmaLast
+  io.ctrl.hungry := !isIdle && !hasBlockData && !gotDmaLast
+  io.ctrl.impending := isWorking && soonempty && !gotDmaLast
+  io.ctrl.full := !isIdle && !queueFull
+  io.ctrl.last_data_out := readLastD1
 }
-
-/** Connects the four-slot WB controller to the asymmetric ping-pong BRAM. */
-class WbControllerWithBram extends Module {
-  val io = IO(new Bundle {
-    val soft_reset    = Input(Bool())
-    val enable        = Input(Bool())
-    val shoot         = Input(Bool())
-    val lut_prog_mode = Input(Bool())
-    val rlast         = Input(Bool())
-
-    val dma_data        = Input(UInt(512.W))
-    val dma_data_valid  = Input(Bool())
-    val dma_data_last   = Input(Bool())
-    val dma_write_ready = Input(Bool())
-
-    val ready     = Output(Bool())
-    val hungry    = Output(Bool())
-    val impending = Output(Bool())
-    val working   = Output(Bool())
-    val full = Output(Bool())
-    val dma_last_data_out = Output(Bool())
-
-    val rd_data_to_cu  = Output(UInt(128.W))
-    val rd_data_to_lut = Output(UInt(128.W))
-    val rd_data_valid  = Output(Bool())
-
-    // Debug visibility for tests.
-    val dbg_active_bank = Output(UInt(1.W))
-    val dbg_write_bank  = Output(UInt(1.W))
-    val dbg_rd_addr     = Output(UInt(9.W))
-    val dbg_wr_addr     = Output(UInt(7.W))
-    val dbg_ping_wr_en   = Output(Bool())
-    val dbg_pong_wr_en   = Output(Bool())
-    val dbg_ping_wr_addr = Output(UInt(7.W))
-    val dbg_pong_wr_addr = Output(UInt(7.W))
-    val dbg_ping_wr_data = Output(UInt(512.W))
-    val dbg_pong_wr_data = Output(UInt(512.W))
-  })
-
-  val controller = Module(new WbController())
-  val bram = Module(new AsymmetricPingPongSRAM())
-
-  controller.io.ctrl.soft_reset      := io.soft_reset
-  controller.io.ctrl.enable          := io.enable
-  controller.io.ctrl.shoot           := io.shoot
-  controller.io.ctrl.rlast           := io.rlast
-  controller.io.ctrl.dma_data_valid  := io.dma_data_valid && io.dma_write_ready
-  controller.io.ctrl.dma_data_last   := io.dma_data_last
-  controller.io.ctrl.dma_write_ready := io.dma_write_ready
-  controller.io.lut_prog_mode        := io.lut_prog_mode
-
-  val readPing  = controller.io.active_bank === 0.U
-  val writePing = controller.io.write_bank === 0.U
-
-  bram.io.ping_wr_en   := controller.io.wr_en && writePing
-  bram.io.pong_wr_en   := controller.io.wr_en && !writePing
-  bram.io.ping_wr_addr := controller.io.wr_addr
-  bram.io.pong_wr_addr := controller.io.wr_addr
-  bram.io.ping_wr_data := io.dma_data
-  bram.io.pong_wr_data := io.dma_data
-
-  bram.io.ping_rd_en   := controller.io.rd_en && readPing
-  bram.io.pong_rd_en   := controller.io.rd_en && !readPing
-  bram.io.ping_rd_addr := controller.io.rd_addr
-  bram.io.pong_rd_addr := controller.io.rd_addr
-
-  val readPingD1 = RegEnable(readPing, true.B, controller.io.rd_en)
-  controller.io.rd_data := Mux(readPingD1, bram.io.ping_rd_data, bram.io.pong_rd_data)
-
-  io.ready     := controller.io.ctrl.ready
-  io.hungry    := controller.io.ctrl.hungry
-  io.impending := controller.io.ctrl.impending
-  io.working   := controller.io.ctrl.working
-  io.full := controller.io.ctrl.full
-  io.dma_last_data_out := controller.io.ctrl.last_data_out
-
-  io.rd_data_to_cu  := controller.io.rd_data_to_cu
-  io.rd_data_to_lut := controller.io.rd_data_to_lut
-  io.rd_data_valid  := RegNext(controller.io.rd_en, false.B)
-
-  io.dbg_active_bank := controller.io.active_bank
-  io.dbg_write_bank  := controller.io.write_bank
-  io.dbg_rd_addr     := controller.io.rd_addr
-  io.dbg_wr_addr     := controller.io.wr_addr
-  io.dbg_ping_wr_en   := bram.io.ping_wr_en
-  io.dbg_pong_wr_en   := bram.io.pong_wr_en
-  io.dbg_ping_wr_addr := bram.io.ping_wr_addr
-  io.dbg_pong_wr_addr := bram.io.pong_wr_addr
-  io.dbg_ping_wr_data := bram.io.ping_wr_data
-  io.dbg_pong_wr_data := bram.io.pong_wr_data
-}
-

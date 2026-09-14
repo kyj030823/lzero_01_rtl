@@ -47,7 +47,6 @@ class WbControllerWithSram extends Module {
   controller.io.ctrl.rlast           := io.rlast
   controller.io.ctrl.dma_data_valid  := io.dma_data_valid
   controller.io.ctrl.dma_data_last   := io.dma_data_last
-  controller.io.ctrl.dma_write_ready := io.dma_write_ready
   controller.io.is_lut_load.get      := io.lut_prog_mode
 
   val readPing  = controller.io.active_bank === 0.U
@@ -78,7 +77,6 @@ class WbControllerWithSram extends Module {
   io.ready          := controller.io.ctrl.ready
   io.hungry         := controller.io.ctrl.hungry
   io.impending      := controller.io.ctrl.impending
-  io.working        := controller.io.ctrl.working
   io.write_buffer_has_space := io.hungry
   io.full := controller.io.ctrl.full
   io.dma_last_data_out := io.dma_data_valid && io.dma_data_last

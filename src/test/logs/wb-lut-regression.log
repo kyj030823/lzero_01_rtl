@@ -1,0 +1,120 @@
+[info] welcome to sbt 1.12.6 (Ubuntu Java 17.0.19)
+[info] loading project definition from /workspace/lzero_01_rtl/project
+[info] loading settings for project lzero_pim from build.sbt...
+[info] set current project to lzero_pim (in build file:/workspace/lzero_01_rtl/)
+[info] Defining Compile / sources
+[info] The new value will be used by Compile / compile / compileOptions, Compile / doc, Compile / packageSrc / mappings
+[info] Reapplying settings...
+[info] set current project to lzero_pim (in build file:/workspace/lzero_01_rtl/)
+[info] Defining Test / sources
+[info] The new value will be used by Test / compile / compileOptions, Test / doc, Test / packageSrc / mappings
+[info] Reapplying settings...
+[info] set current project to lzero_pim (in build file:/workspace/lzero_01_rtl/)
+[info] compiling 1 Scala source to /workspace/lzero_01_rtl/target/scala-2.13/classes ...
+[warn] 37 feature warnings; re-run with -feature for details
+[warn] one warning found
+[info] done compiling
+[CASE START] 01 four 4KB blocks fill 16KB and drain
+  cycles=1285 checkedWords=1024 checkedBlockEnds=4 checkedLutWords=0
+[CASE PASS] 01 four 4KB blocks fill 16KB and drain
+[CASE START] 02 mixed 4K 2K 4K 2K 4K 4K with concurrent wrap
+  cycles=1477 checkedWords=1280 checkedBlockEnds=6 checkedLutWords=0
+[CASE PASS] 02 mixed 4K 2K 4K 2K 4K 4K with concurrent wrap
+[CASE START] 03 reset during WORKING then fresh 4KB
+  cycles=408 checkedWords=273 checkedBlockEnds=1 checkedLutWords=0
+[CASE PASS] 03 reset during WORKING then fresh 4KB
+[CASE START] 04 simultaneous last read and completed write
+  cycles=581 checkedWords=512 checkedBlockEnds=2 checkedLutWords=0
+[CASE PASS] 04 simultaneous last read and completed write
+[CASE START] 05 STALL waits then resumes at next address
+  cycles=468 checkedWords=384 checkedBlockEnds=2 checkedLutWords=0
+[CASE PASS] 05 STALL waits then resumes at next address
+[CASE START] 06 prepared blocks read without bubbles
+  cycles=645 checkedWords=512 checkedBlockEnds=2 checkedLutWords=0
+[CASE PASS] 06 prepared blocks read without bubbles
+[CASE START] 07 short final block with dma_data_last only
+  cycles=10 checkedWords=4 checkedBlockEnds=1 checkedLutWords=0
+[CASE PASS] 07 short final block with dma_data_last only
+[CASE START] 08 consecutive jobs without reset
+  cycles=649 checkedWords=512 checkedBlockEnds=2 checkedLutWords=0
+[CASE PASS] 08 consecutive jobs without reset
+[CASE START] 09 irregular valid gaps while reading and writing
+  cycles=603 checkedWords=512 checkedBlockEnds=2 checkedLutWords=0
+[CASE PASS] 09 irregular valid gaps while reading and writing
+[CASE START] 10 twelve small blocks wrap metadata queue
+  cycles=147 checkedWords=96 checkedBlockEnds=12 checkedLutWords=0
+[CASE PASS] 10 twelve small blocks wrap metadata queue
+[CASE START] 11 one block crosses physical SRAM end
+  cycles=1381 checkedWords=1152 checkedBlockEnds=5 checkedLutWords=0
+[CASE PASS] 11 one block crosses physical SRAM end
+[CASE START] 12 free space 4096 and 4032 bytes
+  cycles=194 checkedWords=0 checkedBlockEnds=0 checkedLutWords=0
+[CASE PASS] 12 free space 4096 and 4032 bytes
+[CASE START] 13 remaining data 144 128 16 and zero bytes
+  cycles=324 checkedWords=256 checkedBlockEnds=1 checkedLutWords=0
+[CASE PASS] 13 remaining data 144 128 16 and zero bytes
+[CASE START] 14 reset recovery from PRELOAD
+  cycles=327 checkedWords=256 checkedBlockEnds=1 checkedLutWords=0
+[CASE PASS] 14 reset recovery from PRELOAD
+[CASE START] 14 reset recovery from READY
+  cycles=390 checkedWords=256 checkedBlockEnds=1 checkedLutWords=0
+[CASE PASS] 14 reset recovery from READY
+[CASE START] 14 reset recovery from STALL
+  cycles=650 checkedWords=512 checkedBlockEnds=2 checkedLutWords=0
+[CASE PASS] 14 reset recovery from STALL
+[CASE START] 14 reset recovery from LAST_READ
+  cycles=646 checkedWords=511 checkedBlockEnds=1 checkedLutWords=0
+[CASE PASS] 14 reset recovery from LAST_READ
+[CASE START] LUT01 single 4KB LUT block and last response routing
+  cycles=325 checkedWords=256 checkedBlockEnds=1 checkedLutWords=256
+[CASE PASS] LUT01 single 4KB LUT block and last response routing
+[CASE START] LUT02 prepared CU LUT CU blocks
+  cycles=805 checkedWords=640 checkedBlockEnds=3 checkedLutWords=128
+[CASE PASS] LUT02 prepared CU LUT CU blocks
+[CASE START] LUT03 consecutive LUT blocks then CU
+  cycles=645 checkedWords=512 checkedBlockEnds=3 checkedLutWords=256
+[CASE PASS] LUT03 consecutive LUT blocks then CU
+[CASE START] LUT04 write LUT while CU is reading
+  cycles=453 checkedWords=384 checkedBlockEnds=2 checkedLutWords=128
+[CASE PASS] LUT04 write LUT while CU is reading
+[CASE START] LUT05 soft reset clears active LUT routing
+  cycles=407 checkedWords=272 checkedBlockEnds=1 checkedLutWords=16
+[CASE PASS] LUT05 soft reset clears active LUT routing
+[CASE START] LUT06 metadata wraps after a queued LUT marker
+  cycles=145 checkedWords=96 checkedBlockEnds=12 checkedLutWords=8
+[CASE PASS] LUT06 metadata wraps after a queued LUT marker
+[CASE START] LUT07 held mode during a LUT block
+  cycles=325 checkedWords=256 checkedBlockEnds=1 checkedLutWords=256
+[CASE PASS] LUT07 held mode during a LUT block
+[info] WbCircularRegression_Test:
+[info] WbController circular SRAM
+[info] - should 01 four 4KB blocks fill 16KB and drain (2 seconds, 940 milliseconds)
+[info] - should 02 mixed 4K 2K 4K 2K 4K 4K with concurrent wrap (1 second, 49 milliseconds)
+[info] - should 03 reset during WORKING then fresh 4KB (452 milliseconds)
+[info] - should 04 simultaneous last read and completed write (505 milliseconds)
+[info] - should 05 STALL waits then resumes at next address (476 milliseconds)
+[info] - should 06 prepared blocks read without bubbles (488 milliseconds)
+[info] - should 07 short final block with dma_data_last only (149 milliseconds)
+[info] - should 08 consecutive jobs without reset (519 milliseconds)
+[info] - should 09 irregular valid gaps while reading and writing (492 milliseconds)
+[info] - should 10 twelve small blocks wrap metadata queue (216 milliseconds)
+[info] - should 11 one block crosses physical SRAM end (821 milliseconds)
+[info] - should 12 free space 4096 and 4032 bytes (379 milliseconds)
+[info] - should 13 remaining data 144 128 16 and zero bytes (300 milliseconds)
+[info] - should 14 reset recovery from PRELOAD (282 milliseconds)
+[info] - should 14 reset recovery from READY (348 milliseconds)
+[info] - should 14 reset recovery from STALL (509 milliseconds)
+[info] - should 14 reset recovery from LAST_READ (438 milliseconds)
+[info] - should LUT01 single 4KB LUT block and last response routing (288 milliseconds)
+[info] - should LUT02 prepared CU LUT CU blocks (514 milliseconds)
+[info] - should LUT03 consecutive LUT blocks then CU (481 milliseconds)
+[info] - should LUT04 write LUT while CU is reading (339 milliseconds)
+[info] - should LUT05 soft reset clears active LUT routing (398 milliseconds)
+[info] - should LUT06 metadata wraps after a queued LUT marker (213 milliseconds)
+[info] - should LUT07 held mode during a LUT block (276 milliseconds)
+[info] Run completed in 13 seconds, 183 milliseconds.
+[info] Total number of tests run: 24
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 24, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 20 s, completed Sep 14, 2026, 1:29:35 AM

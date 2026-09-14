@@ -26,14 +26,12 @@ class OcmCommonIo extends Bundle {
   val rlast           = Input(Bool()) //4KB 데이터 마지막
   val dma_data_valid  = Input(Bool())
   val dma_data_last   = Input(Bool()) //matmul 데이터 마지막
-  val dma_write_ready = Input(Bool())
 
-  val last_data_out = Output(Bool())
+  val last_data_out   = Output(Bool())
 
   val ready           = Output(Bool())
   val hungry          = Output(Bool())
   val impending       = Output(Bool())
-  val working         = Output(Bool())
   val full            = Output(Bool())
 }
 
@@ -260,8 +258,7 @@ class UbWbController(val is_ub: Boolean) extends Module {
 
   // Signal Extraction
   val active_bank_cnt = OcmConst.BANK_MAX_READS - read_ptr
-  
-  io.ctrl.working   := is_working
+
   io.ctrl.ready     := (state === OcmState.S_READY) || !io.ctrl.enable
   io.ctrl.hungry    := (state === OcmState.S_WORKING || state === OcmState.S_PRELOAD) && !(pong_valid || last_write)
   io.ctrl.impending := is_working && (active_bank_cnt <= OcmConst.WATERMARK) && !(pong_valid || last_write)
@@ -352,7 +349,6 @@ class VbController extends Module {
     lastWritePtr := 0.U
   }
 
-  io.ctrl.working := isWorking
   io.rd_addr := readPtr
   io.rd_en := isWorking && io.fusion_req_in
   io.wr_en := io.wr_valid && state === OcmState.S_WORKING
