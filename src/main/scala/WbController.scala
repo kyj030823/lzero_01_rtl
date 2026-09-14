@@ -234,6 +234,6 @@ class WbController(
   io.ctrl.ready := isReady || !io.ctrl.enable
   io.ctrl.hungry := !isIdle && !hasBlockData && !gotDmaLast
   io.ctrl.impending := isWorking && soonempty && !gotDmaLast
-  io.ctrl.full := !isIdle && !queueFull
+  io.ctrl.full := isIdle || queueFull
   io.ctrl.last_data_out := readLastD1
 }

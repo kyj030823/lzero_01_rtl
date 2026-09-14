@@ -79,6 +79,9 @@ class WbCircularRegression_Test extends AnyFlatSpec with ChiselScalatestTester {
     d.io.data.poke(0.U)
     d.io.lutMode.poke(false.B)
     d.reset.poke(true.B); d.clock.step(2); d.reset.poke(false.B)
+    d.io.state.expect(0.U)
+    d.io.full.expect(false.B) // Empty SRAM; IDLE still blocks new requests.
+    d.io.ctrl.full.expect(true.B)
     d.io.ctrl.enable.poke(true.B)
     tick()
 
@@ -175,7 +178,7 @@ class WbCircularRegression_Test extends AnyFlatSpec with ChiselScalatestTester {
 
   scenario("01 four 4KB blocks fill 16KB and drain") { t =>
     (0 until 4).foreach(i => t.block(4096, i == 3))
-    t.d.io.full.expect(true.B); t.d.io.ctrl.full.expect(false.B)
+    t.d.io.full.expect(true.B); t.d.io.ctrl.full.expect(true.B)
     t.start(); t.drain()
     assert(t.reads == 1024 && t.lasts == 4)
   }
@@ -234,9 +237,9 @@ class WbCircularRegression_Test extends AnyFlatSpec with ChiselScalatestTester {
   }
   scenario("12 free space 4096 and 4032 bytes") { t =>
     (0 until 3).foreach(_ => t.block(4096))
-    t.d.io.full.expect(false.B); t.d.io.ctrl.full.expect(true.B)
+    t.d.io.full.expect(false.B); t.d.io.ctrl.full.expect(false.B)
     t.tick(write=true)
-    t.d.io.full.expect(true.B); t.d.io.ctrl.full.expect(false.B)
+    t.d.io.full.expect(true.B); t.d.io.ctrl.full.expect(true.B)
   }
   scenario("13 remaining data 144 128 16 and zero bytes") { t =>
     t.block(4096); t.start(); t.idle(247)
