@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-11-20T06:05:21.890668+00:00",
+  "runDirectory": "/home/kyj03/lzero_01_rtl/verification/weightbuffer/results/runs/20261120T060521545944Z",
+  "group": "acceptance",
+  "filter": null,
+  "sourceHashes": {
+    "src/main/scala/CircularBufferStorage.scala": "36b81171d82e03db0652b308995bda9d069992286551972d82b860d7d5fc15e0",
+    "src/main/scala/CircularBufferReadPath.scala": "512b80b7572e494ca37840b34d9b25249e10d48e568828abf9dbdaffa7d75c25",
+    "src/main/scala/CircularBufferWritePath.scala": "94b891db17be295105476a635bc29266aae628c168031909527aa3c51a5c0407",
+    "src/main/scala/CircularBufferCore.scala": "5f0b330906f9f3b915aaecef8a0a42ca03ddfdd66ab385cc9556122db4a1687e",
+    "src/main/scala/WeightBufferController.scala": "cd3e4ca1c52e9cf0b1d440065f4635a0384ec22c46d868c424ce8a842aea8170",
+    "src/main/scala/WeightBufferDataPath.scala": "59829bf4e29d11db8a7e6fce92d6f2d02fca90fec86a362f07b77f155d98fd1a"
+  },
+  "testSourceHashes": {
+    "src/test/scala/weightbuffer/CircularBufferBoundarySpec.scala": "65ff9f54d8538a1ba4d0c780e51532007402ab813019ca39f8f9f5fc4a61749b",
+    "src/test/scala/weightbuffer/WeightBufferAcceptanceSpec.scala": "08421faafdcf81e2f2911fc4e9c1f155d88ce77e491b5f444af3bc71d445d1af",
+    "src/test/scala/weightbuffer/WeightBufferContextSpec.scala": "657fece604acd06a186d952a5333b62d1d009c23385a7cfc9595ea39d67a9bf3",
+    "src/test/scala/weightbuffer/WeightBufferLutSpec.scala": "79a8c92840b9ccb5634cd02a79ddf78541344f170e5335f54e0de1fb717d37b3",
+    "src/test/scala/weightbuffer/WeightBufferPrefillSpec.scala": "24ee19cf2901d5e69c5a1f3f42f70bf47e34e4037e8b21fb495da2baeee940a8",
+    "src/test/scala/weightbuffer/WeightBufferStatusSpec.scala": "5b08c2faeeaeb9e2784dd33df5879d2bb24729fe20aeff0dbfaa1ab35d1886d5",
+    "src/test/scala/weightbuffer/WeightBufferStreamOrderSpec.scala": "e62bf5e731d328f711c7ea2117b80032bbd249ebe3efc030062d8b858048fd28",
+    "src/test/scala/weightbuffer/WeightBufferTestSupport.scala": "925a583d578179531eca928e7fcc59a9cbb2f181bb92c3c72e798c8b4495fe46"
+  },
+  "excludedTags": [
+    "npu.core.memory.WbExtendedLut"
+  ],
+  "excludedScope": [
+    "fused logical order/source split (criterion 4)",
+    "long LUT combinations",
+    "real CCU/programming-unit integration",
+    "real AG address generation"
+  ],
+  "versions": {
+    "scala": "2.13.12",
+    "chisel": "6.7.0",
+    "chiseltest": "6.0.0"
+  },
+  "reusedBuild": "/home/kyj03/lzero_01_rtl/verification/weightbuffer/results/runs/20261120T055947807504Z",
+  "compileExitCode": 0,
+  "classesDirectory": "/home/kyj03/lzero_01_rtl/verification/weightbuffer/results/runs/20261120T055947807504Z/work/classes",
+  "suites": [
+    "WeightBufferAcceptanceSpec"
+  ],
+  "exitCode": 0,
+  "productionUnchanged": true,
+  "testsUnchangedDuringRun": true,
+  "junitCounts": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "finishedAt": "2026-11-20T06:09:58.636058+00:00"
+}

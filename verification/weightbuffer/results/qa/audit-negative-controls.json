@@ -1,0 +1,46 @@
+[
+  {
+    "name": "wrong-output-data",
+    "rejected": true,
+    "errors": [
+      "weight 데이터 @68"
+    ]
+  },
+  {
+    "name": "premature-operation-done",
+    "rejected": true,
+    "errors": [
+      "조기/누락 operationDone @2",
+      "완료 pulse context=10"
+    ]
+  },
+  {
+    "name": "uncommitted-SRAM-read",
+    "rejected": true,
+    "errors": [
+      "미기록 read @3",
+      "chunk 초과 read @3"
+    ]
+  },
+  {
+    "name": "wrong-free-space",
+    "rejected": true,
+    "errors": [
+      "writer 공간 회계"
+    ]
+  },
+  {
+    "name": "compute-accepted-during-holding",
+    "rejected": true,
+    "errors": [
+      "상위 준비 전 compute 수락 @34"
+    ]
+  },
+  {
+    "name": "late-weight-eligibility",
+    "rejected": true,
+    "errors": [
+      "관측 신호에서 RLAST 다음 clock 요청 없음"
+    ]
+  }
+]

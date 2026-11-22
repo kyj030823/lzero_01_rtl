@@ -1,0 +1,11 @@
+{
+  "capturedAt": "2026-11-22T05:45:13.236240+00:00",
+  "hashes": {
+    "src/main/scala/commonbuffer/CircularBufferCore.scala": "5f0b330906f9f3b915aaecef8a0a42ca03ddfdd66ab385cc9556122db4a1687e",
+    "src/main/scala/commonbuffer/CircularBufferReadPath.scala": "512b80b7572e494ca37840b34d9b25249e10d48e568828abf9dbdaffa7d75c25",
+    "src/main/scala/commonbuffer/CircularBufferStorage.scala": "36b81171d82e03db0652b308995bda9d069992286551972d82b860d7d5fc15e0",
+    "src/main/scala/commonbuffer/CircularBufferWritePath.scala": "94b891db17be295105476a635bc29266aae628c168031909527aa3c51a5c0407",
+    "src/main/scala/weightbuffer/WeightBufferController.scala": "cd3e4ca1c52e9cf0b1d440065f4635a0384ec22c46d868c424ce8a842aea8170",
+    "src/main/scala/weightbuffer/WeightBufferDataPath.scala": "59829bf4e29d11db8a7e6fce92d6f2d02fca90fec86a362f07b77f155d98fd1a"
+  }
+}

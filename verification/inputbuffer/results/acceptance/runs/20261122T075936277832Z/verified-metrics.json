@@ -1,0 +1,17 @@
+{
+  "additionalDataContexts": 13,
+  "additionalComparedOutputBeats": 10047,
+  "additionalInputBytes": 112624,
+  "forcedConcurrency": {
+    "requestAndReclaimCycles": 2,
+    "writeReadReclaimCycles": 1,
+    "inFlightResponseHoldPoints": 3,
+    "heldClocks": 15
+  },
+  "ubMaskMatrix": {
+    "ubMaskBankRegionCases": 48,
+    "physicalWrapCrossingBeats": 2,
+    "extendedWrapCrossingBeats": 1,
+    "scope": "UB 48 region cases plus exact boundary matrix in shared storage suite"
+  }
+}

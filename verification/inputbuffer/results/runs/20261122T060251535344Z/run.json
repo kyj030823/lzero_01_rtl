@@ -1,0 +1,77 @@
+{
+  "startedAt": "2026-11-22T06:02:51.878450+00:00",
+  "runDirectory": "/home/kyj03/lzero_01_rtl/verification/inputbuffer/results/runs/20261122T060251535344Z",
+  "sourceHashes": {
+    "src/main/scala/commonbuffer/CircularBufferStorage.scala": "36b81171d82e03db0652b308995bda9d069992286551972d82b860d7d5fc15e0",
+    "src/main/scala/commonbuffer/CircularBufferReadPath.scala": "512b80b7572e494ca37840b34d9b25249e10d48e568828abf9dbdaffa7d75c25",
+    "src/main/scala/commonbuffer/CircularBufferWritePath.scala": "b908c7f324ba160b39a28d1e4af2c94bbc45f20289ef7e43a9b0782373dbebc4",
+    "src/main/scala/commonbuffer/CircularBufferCore.scala": "83560609ed8f3d96de15cd33ddc98b6b4ea0952cc7ed2f3e6301465e07d47dbd",
+    "src/main/scala/weightbuffer/WeightBufferController.scala": "cd3e4ca1c52e9cf0b1d440065f4635a0384ec22c46d868c424ce8a842aea8170",
+    "src/main/scala/weightbuffer/WeightBufferDataPath.scala": "59829bf4e29d11db8a7e6fce92d6f2d02fca90fec86a362f07b77f155d98fd1a",
+    "src/main/scala/inputbuffer/InputBufferController.scala": "62f76123814627cc3675fb5444c206252b028638b11731e4b8c3fc0bdd10bbc8",
+    "src/main/scala/inputbuffer/InputBufferDataPath.scala": "276076ef82eb4a6dfe671a2f18b5c58714af7e792f1377a31daee68f761de0f6"
+  },
+  "testSourceHashes": {
+    "src/test/scala/inputbuffer/InputBufferSpec.scala": "47560ce64567eaa45808a2d787530c008f963f4f7d5697f8f1f528bd652c1e8d",
+    "src/test/scala/weightbuffer/WeightBufferPrefillSpec.scala": "24ee19cf2901d5e69c5a1f3f42f70bf47e34e4037e8b21fb495da2baeee940a8"
+  },
+  "scope": "UB 실제 SRAM 경로 6개 + 변경된 공용 경로의 WB smoke 2개",
+  "excluded": [
+    "WB 전체 62개 회귀",
+    "긴 LUT",
+    "실제 AG/IB source resolver",
+    "실제 CU ZeroPadder",
+    "production fusion phase/IB epoch 통합"
+  ],
+  "versions": {
+    "scala": "2.13.12",
+    "chisel": "6.7.0",
+    "chiseltest": "6.0.0"
+  },
+  "changedExistingSources": [
+    "src/main/scala/commonbuffer/CircularBufferCore.scala",
+    "src/main/scala/commonbuffer/CircularBufferWritePath.scala"
+  ],
+  "wbSourcesUnchanged": true,
+  "compileExitCode": 0,
+  "phases": [
+    {
+      "name": "ub",
+      "exitCode": 0,
+      "expected": 6,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "name": "wb-lut-prefill",
+      "exitCode": 0,
+      "expected": 1,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "name": "wb-cache-handoff",
+      "exitCode": 0,
+      "expected": 1,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    }
+  ],
+  "totalTests": 8,
+  "productionUnchangedDuringRun": true,
+  "testsUnchangedDuringRun": true,
+  "exitCode": 0,
+  "finishedAt": "2026-11-22T06:06:08.695713+00:00"
+}

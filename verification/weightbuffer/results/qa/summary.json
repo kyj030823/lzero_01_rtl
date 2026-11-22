@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-11-22T05:34:18.764366+00:00",
+  "htmlSha256": "e0f82318c901ff3631123c110189e9973b8c706afd61f80a6dd89858301b609e",
+  "negativeControls": 6,
+  "fileLinksChecked": 20,
+  "desktopPassed": true,
+  "mobilePassed": true,
+  "desktopChecks": 41,
+  "mobileChecks": 41,
+  "mobileNote": "Windows headless viewport 500px에서 414px 문서 폭을 강제한 layout 검사",
+  "rtlRerun": false
+}

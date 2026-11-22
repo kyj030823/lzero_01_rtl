@@ -1,0 +1,14 @@
+[36mRun starting. Expected test count is: 6[0m
+[32mInputBufferSpec:[0m
+[32mUB v3[0m
+[32m- should validate mode shape replay capacity and compact threshold without width truncation (2 seconds, 898 milliseconds)[0m
+[32m- should preserve dense STREAM m-pass-k order and resupply fusion through AG (13 seconds, 279 milliseconds)[0m
+[32m- should pack a six KiB row and replay without middle-pass refill before overlapping the next row (50 seconds, 422 milliseconds)[0m
+[32m- should reuse all four entries of a sixteen KiB row during its only and final pass (1 minute, 9 seconds)[0m
+[32m- should consume compact fusion payload only on CU cadence and keep VPU tails linear (9 seconds, 66 milliseconds)[0m
+[32m- should hold final output drain contexts reject stale data and finish empty contexts safely (3 seconds, 129 milliseconds)[0m
+[36mRun completed in 2 minutes, 28 seconds.[0m
+[36mTotal number of tests run: 6[0m
+[36mSuites: completed 1, aborted 0[0m
+[36mTests: succeeded 6, failed 0, canceled 0, ignored 0, pending 0[0m
+[32mAll tests passed.[0m

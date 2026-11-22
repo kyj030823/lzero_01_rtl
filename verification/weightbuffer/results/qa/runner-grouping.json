@@ -1,0 +1,11 @@
+{
+  "mergedJUnitCounts": {
+    "boundaries": 4,
+    "acceptance": 7,
+    "regression": 51
+  },
+  "missingJUnitRejected": true,
+  "allRunUpdatesAllGroups": true,
+  "filteredRunPreservesFullResult": true,
+  "rtlRerun": false
+}

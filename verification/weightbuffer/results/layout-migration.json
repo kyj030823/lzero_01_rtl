@@ -1,0 +1,75 @@
+{
+  "movedAt": "2026-11-20T05:44:39.355569+00:00",
+  "scope": "WB v3 tests, evidence and documentation only. Production Scala and unrelated legacy tests unchanged.",
+  "moves": [
+    {
+      "from": "src/test/scala/WeightBufferContextSpec.scala",
+      "to": "src/test/scala/weightbuffer/WeightBufferContextSpec.scala",
+      "sha256BeforeMove": {
+        "WeightBufferContextSpec.scala": "657fece604acd06a186d952a5333b62d1d009c23385a7cfc9595ea39d67a9bf3"
+      }
+    },
+    {
+      "from": "src/test/scala/WeightBufferLutSpec.scala",
+      "to": "src/test/scala/weightbuffer/WeightBufferLutSpec.scala",
+      "sha256BeforeMove": {
+        "WeightBufferLutSpec.scala": "96c591ac4c502076b2f72a7cd3838b190f70172c46fe392225e392c697ac2ef1"
+      }
+    },
+    {
+      "from": "src/test/scala/WeightBufferPrefillSpec.scala",
+      "to": "src/test/scala/weightbuffer/WeightBufferPrefillSpec.scala",
+      "sha256BeforeMove": {
+        "WeightBufferPrefillSpec.scala": "24ee19cf2901d5e69c5a1f3f42f70bf47e34e4037e8b21fb495da2baeee940a8"
+      }
+    },
+    {
+      "from": "src/test/scala/WeightBufferStatusSpec.scala",
+      "to": "src/test/scala/weightbuffer/WeightBufferStatusSpec.scala",
+      "sha256BeforeMove": {
+        "WeightBufferStatusSpec.scala": "5b08c2faeeaeb9e2784dd33df5879d2bb24729fe20aeff0dbfaa1ab35d1886d5"
+      }
+    },
+    {
+      "from": "src/test/scala/WeightBufferStreamOrderSpec.scala",
+      "to": "src/test/scala/weightbuffer/WeightBufferStreamOrderSpec.scala",
+      "sha256BeforeMove": {
+        "WeightBufferStreamOrderSpec.scala": "e62bf5e731d328f711c7ea2117b80032bbd249ebe3efc030062d8b858048fd28"
+      }
+    },
+    {
+      "from": "verification/wb-stream-order",
+      "to": "verification/weightbuffer/stream-order",
+      "sha256BeforeMove": {
+        "report-template.html": "2e4a3145dde1c2c23b88ffa66983038a6d61a6db79b74861801f56b8c54b1f2d",
+        "report_builder.py": "bc7f58ee86e348b7a7dc6cdf8f7a54b4e918938da8f7b8b5b3a07e7a8af68de5",
+        "README.md": "e8ee71faa47d73c6489b1610af5e67f0e016baffc2dd204219efd8d6b9a0ef4e",
+        ".gitignore": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b",
+        "run.py": "e56b4c15f6fbfc91f6614b68c9986e94726b27bd02479a269d8bcf5c9d09bdb0",
+        "results/last-run.json": "d9a6165165b7745035d6c9b6e3eb305e61c521ea84379a09925c3338d2c34f1d",
+        "results/browser-qa.json": "a4e908ceab6cef5659f7460e3236c282b41e8429616d9fc7265f736b73b03c5a",
+        "results/preview-mobile.png": "72880e0f955370c8884e3b2fc76334b6ce7706a7eb17d32864796de3a9f3ea7d",
+        "results/preview-desktop.png": "34b7b9f3282da2eb1bdde257f1557c07954adfccc39b268955c0c2a4a617355a",
+        "results/index.html": "5ddee5aac233808b399369dce6a1e51b3fb7dcbccd41bb37fd16e8a942e2489a",
+        "results/browser-qa-mobile.json": "8d9360b45b2bdef96922dd2cb71c33f982e662e93866b518b52ba5f59501f9a5",
+        "results/report.json": "c3958632c722c5d5da670992b05e88194e9e4be7b4d8f8d2c9a903f1164e3ba1",
+        "results/runs/20261115T122654838532Z/tests.log": "bf69a22612d633d72730f71a437fa3090270c6f4a09c42b7cf19a96c4913b5e4",
+        "results/runs/20261115T122654838532Z/run.json": "5067e87249dc8f083663ae3f3b0a853425d7f82ab7ab73f35ed76243c72cfb62",
+        "results/runs/20261115T122654838532Z/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "results/runs/20261115T122654838532Z/junit/TEST-npu.core.memory.WeightBufferStreamOrderSpec.xml": "290b49ee285bd244e45d050a342ec2ea8f2f8b4e38d15dbeffb2f2517d350091",
+        "results/runs/20261115T122654838532Z/traces/baseline.json": "da48e00675fb3ef64618f72092de66319e0c0b5e93650adca1d062e380066e51",
+        "results/runs/20261115T122654838532Z/traces/count-mismatch.json": "54eb81736e875d7f27740d8d3def06098606888df9bdb302233dc0c28af3d41e",
+        "results/runs/20261115T122654838532Z/traces/stalls.json": "2e63c11b2ab87e3ad8d5d2cf083d42c485b2449762f8a5190dd3024b369db299",
+        "results/runs/20261115T122654838532Z/traces/chunk-boundary.json": "14192cd9015a1b9ab693b907c026ea6efd3f9fdd7d76944cb4e09fbfefe1468f",
+        "__pycache__/report_builder.cpython-310.pyc": "4b2caf695863f7ae6dd1bdaf17919a04f5fdcf5b708097a9d0fe05ddf2b4cf67"
+      }
+    },
+    {
+      "from": "src/main/scala/CircularBufferImplementation.md",
+      "to": "verification/weightbuffer/docs/CircularBufferImplementation.md",
+      "sha256BeforeMove": {
+        "CircularBufferImplementation.md": "c4054b92060fba529e597b5f2c3ee8450392617cde9d4cda58d0719d8c397bc6"
+      }
+    }
+  ]
+}

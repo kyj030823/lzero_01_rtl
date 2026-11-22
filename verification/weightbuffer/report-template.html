@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WB 검증 결과</title>
+<style>
+:root{font-family:system-ui,"Malgun Gothic",sans-serif;color:#17283c;background:#f3f6fa;line-height:1.6}
+[hidden]{display:none!important}*{box-sizing:border-box}body{margin:0}main{max-width:1320px;margin:auto;padding:32px 24px 64px}
+h1{font-size:32px;letter-spacing:-1px;margin:4px 0}h2{font-size:20px;margin:0 0 12px}h3{font-size:16px}
+p{margin:8px 0}.muted{color:#63748b;font-size:13px}.eyebrow{color:#176cc6;font-size:12px;letter-spacing:2px;font-weight:750}
+.card{background:white;border:1px solid #dce4ef;border-radius:14px;padding:22px;margin-top:20px;box-shadow:0 3px 15px #23426006}
+.hero{display:flex;align-items:center;justify-content:space-between;gap:20px}.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:750;white-space:nowrap;background:#edf1f6;color:#52647b}
+.pass{background:#e1f6eb;color:#146746}.fail{background:#ffe4e4;color:#aa2828}.model{background:#fff0d8;color:#8a5700}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}.stat{background:white;border:1px solid #dce4ef;border-radius:12px;padding:16px}.stat b{display:block;font-size:26px;color:#175fac}.stat span{font-size:13px;color:#63748b}
+.notice{border-left:4px solid #dba044;background:#fff8eb;padding:12px 16px;font-size:14px;margin-top:20px}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #e8edf4;vertical-align:top}th{color:#63748b;background:#f7f9fc;font-weight:650}td:first-child{white-space:nowrap}a{color:#1468b6;text-underline-offset:3px}
+.scroll{overflow:auto}.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}select,button{font:inherit;border:1px solid #cbd8e8;background:white;border-radius:7px;padding:8px 12px;color:#233f5e}button{cursor:pointer}button:hover{background:#edf5ff}select{max-width:100%}
+.explorer{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;margin-top:16px}.plot{min-width:0}canvas{width:100%;height:370px;border:1px solid #dbe5f0;border-radius:8px;background:#fbfdff;display:block}input[type=range]{width:100%;accent-color:#176cc6}
+.inspector{padding:14px;background:#f6f9fe;border:1px solid #e1e8f2;border-radius:9px;min-width:0}.inspector pre{white-space:pre-wrap;word-break:break-all;font:12px/1.65 ui-monospace,Consolas,monospace;margin:8px 0}.case-description{font-weight:650;color:#264766}.metric{font:12px/1.6 ui-monospace,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+details{margin-top:15px}summary{cursor:pointer;color:#315b88;font-weight:650;font-size:14px}.foot{margin-top:22px;font-size:13px;color:#63748b}
+#table-tests td:nth-child(2){min-width:280px}#unit-details{font-size:12px;max-height:450px;overflow:auto;white-space:pre-wrap;word-break:break-all}
+@media(max-width:850px){.explorer{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.hero{align-items:flex-start}.card{padding:16px}main{padding:20px 12px 40px}h1{font-size:27px}}
+</style>
+<main>
+<div class="hero"><div><div class="eyebrow">WEIGHT BUFFER · SPEC V3</div><h1>WB 검증 결과</h1><p class="muted" id="generated"></p></div><span class="badge" id="overall">불러오는 중</span></div>
+<div class="stats" id="stats"></div>
+<div class="notice"><b>검증 범위</b><br>4번 fusion 순서와 긴 LUT 조합 6개는 제외했다. 8·9번은 실제 WB에 CCU/programming 동작 모형을 연결한 시험이며, 실제 상위 모듈은 미연결 상태다. 1번은 WB 입력 이후의 논리 순서 검증으로, 실제 AG의 DRAM/IB 주소 생성은 포함하지 않는다.</div>
+
+<section class="card"><h2>실행 목록</h2><div class="scroll"><table><thead><tr><th>분류</th><th>결과</th><th>ScalaTest</th><th>실행 기록</th></tr></thead><tbody id="groups"></tbody></table></div><p class="muted">잘못된 설정과 unsafe reset을 의도적으로 넣는 음성 시험은 assertion 발생이 정상이다. 최종 ScalaTest/JUnit 성공 여부로 판정한다.</p></section>
+
+<section class="card"><h2>명세 항목별 확인 범위</h2><div class="scroll"><table><thead><tr><th>항목</th><th>내용</th><th>결과</th><th>확인 경계</th></tr></thead><tbody id="coverage"></tbody></table></div></section>
+
+<section class="card">
+<h2>추가 시험 관측값</h2>
+<div class="toolbar"><select id="case-select" aria-label="추가 시험 선택"></select><button id="previous" aria-label="이전 관측">←</button><button id="next" aria-label="다음 관측">→</button><button id="play">재생</button><select id="speed" aria-label="재생 속도"><option value="1">1 sample</option><option value="8">8 samples</option><option value="32">32 samples</option></select><a id="raw-link">원본 JSON</a></div>
+<p class="case-description" id="case-description"></p><p class="muted" id="case-scope"></p>
+<div class="explorer" id="explorer"><div class="plot"><canvas id="timeline"></canvas><input id="position" type="range" min="0" max="0" value="0" aria-label="관측 위치"><p class="muted">점은 실제 수락·read 발행·완료 pulse다. Holding/impending은 상태 구간이다. 타임라인 클릭이나 ← → 키로 이동할 수 있다.</p></div><div class="inspector"><b id="sample-title"></b><pre id="sample"></pre></div></div>
+<pre id="unit-details" hidden></pre>
+<details><summary>시험별 측정값</summary><pre class="metric" id="metrics"></pre></details>
+</section>
+
+<section class="card"><h2>기존 STREAM 상세 시각화</h2><p>m→n→k 순서, M-group, chunk 경계와 출력 정지는 기존 전용 보고서에서 볼 수 있다.</p><a href="../stream-order/results/index.html">STREAM 타임라인 보고서 열기</a><p class="muted">이 상세 화면도 이번 regression의 실제 trace로 생성했다. 이전 원본 실행 기록은 stream-order/results/runs에 보존했다.</p></section>
+
+<section class="card"><h2>전체 ScalaTest 목록</h2><div class="scroll"><table id="table-tests"><thead><tr><th>Suite</th><th>시험</th><th>결과</th><th>시간</th></tr></thead><tbody id="tests"></tbody></table></div></section>
+<div class="foot">서버·CDN 없이 index.html을 직접 열 수 있다. <a href="report.json">전체 집계 JSON</a> · <a href="../README.md">폴더 구조 및 실행 방법</a><p>RTL 동작은 변경하지 않았다. 결과는 실행 전후 소스 SHA-256과 현재 소스를 대조한다.</p></div>
+</main>
+<script id="wb-data" type="application/json">__WB_REPORT_DATA__</script>
+<script>
+'use strict';
+const report=JSON.parse(document.getElementById('wb-data').textContent);
+const el=id=>document.getElementById(id);
+const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const badge=(s,kind)=>'<span class="badge '+(kind|| (s==='PASS'?'pass':s==='FAIL'?'fail':''))+'">'+esc(s)+'</span>';
+el('generated').textContent='집계 '+new Date(report.generatedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})+' (KST)';
+el('overall').textContent=report.status==='PASS'?'실행 범위 PASS':report.status;
+el('overall').className='badge '+(report.status==='PASS'?'pass':'fail');
+const n=report.tests.length, pass=report.tests.filter(t=>t.passed).length;
+el('stats').innerHTML=[['ScalaTest',pass+' / '+n],['추가 관측 시험',report.cases.filter(c=>c.verified).length+' / '+report.cases.length],['저장소 경계 행렬',(report.cases.find(c=>c.id==='storage-mask-matrix')?.metrics.matrixCases??'—')+' 조합'],['실행 중 제품 RTL 변경',report.groups.filter(g=>g.runDirectory).every(g=>g.productionUnchanged)?'0 파일':'확인 필요']].map(p=>'<div class="stat"><b>'+esc(p[1])+'</b><span>'+esc(p[0])+'</span></div>').join('');
+el('groups').innerHTML=report.groups.map(g=>'<tr><td>'+esc(g.id)+'</td><td>'+badge(g.status)+'</td><td>'+(g.counts?g.counts.tests:'—')+'</td><td>'+(g.relativePath?'<a href="'+esc(g.relativePath)+'/tests.log">실행 로그</a> · <a href="'+esc(g.relativePath)+'/run.json">메타데이터</a>':'기록 없음')+'</td></tr>').join('');
+const verified=id=>report.cases.some(c=>c.id===id&&c.verified);
+const regression=report.groups.some(g=>g.id==='regression'&&g.status==='PASS');
+const matrix=[
+[1,'Normal STREAM 순서·반복 횟수',regression?'PASS':'미완료','WB 논리 stream 기준; 실제 AG 주소는 별도'],
+[2,'Full-cache hungry 억제·M replay',verified('full-cache-final')?'PASS':'미완료','16KiB 한 번 적재, 3,072 beat 재생'],
+[3,'W1+W2 합산 용량',regression?'PASS':'미완료','기존 설정 행렬·덧셈 carry 검증'],
+[4,'Fused logical order/source split','제외','이번 요청에서 제외'],
+[5,'LUT 조기 출력·committed 경계',verified('lut-commit-transition')?'PASS':'미완료','실제 SRAM read 발행 주소까지 검사'],
+[6,'LUT 수신 후 요청·입출력 overlap',verified('lut-commit-transition')?'PASS':'미완료','WB memoryChunkLast 수락 기준; adapter는 별도'],
+[7,'LUT tail/weight 경계',verified('lut-tail-wrap')?'PASS':'미완료','4종 tail 및 실제 16KiB/32KiB wrap'],
+[8,'Receive/stream/programming/weight timing',verified('programming-timings')?'MODEL PASS':'미완료','외부 동작 모형 5순서; 실제 unit 미연결'],
+[9,'Compute pause 중 DMA/programming 진행',verified('programming-timings')?'MODEL PASS':'미완료','Holding·UB 준비 동작 모형'],
+[10,'Mask/bank/공간/예약/entry/동시 갱신',verified('storage-mask-matrix')&&verified('writer-simultaneous')&&verified('writer-admission')&&verified('lut-entry-budget')?'PASS':'미완료','48조합, 16개 동시 SRAM 접근, 3중 갱신'],
+[11,'LUT last 포인터 보존·weight ready 분리',verified('lut-tail-wrap')?'PASS':'미완료','연속 context·독립 공간 모델'],
+[12,'Disabled/constant/zero 및 LUT-only',verified('special-contexts')?'PASS':'미완료','3종 × LUT 유무, 다음 정상 context'],
+[13,'공급 종료/최종 소비 분리',verified('full-cache-final')?'PASS':'미완료','최종 출력 5clock 정지 후 수락'],
+[14,'SRAM hold/context drain/완료 후 상태',verified('reader-context-drain')&&verified('reader-metadata-hold')?'PASS':'미완료','발행 metadata 보존, 다음 context 분리']
+];
+el('coverage').innerHTML=matrix.map(r=>'<tr><td>'+r[0]+'</td><td>'+esc(r[1])+'</td><td>'+badge(r[2],r[2]==='MODEL PASS'?'model':undefined)+'</td><td>'+esc(r[3])+'</td></tr>').join('');
+el('tests').innerHTML=report.tests.map(t=>'<tr><td>'+esc(t.suite.split('.').pop())+'</td><td>'+esc(t.name)+'</td><td>'+badge(t.passed?'PASS':'FAIL')+'</td><td>'+t.seconds.toFixed(3)+'s</td></tr>').join('');
+let active=null, rows=[], position=0, timer=null;
+const canvas=el('timeline'), ctx=canvas.getContext('2d');
+const lanes=[
+['requestFire','Weight request','#6e60ce'],
+['memoryLut','LUT ingress','#db8f2c'],
+['memoryWeight','Weight ingress','#237ccb'],
+['lutFire','LUT output','#dc9450'],
+['computeFire','Compute output','#228c69'],
+['readIssue','SRAM read','#5898a8'],
+['receiveDone','LUT receive done','#b46d14'],
+['streamDone','LUT stream done','#cf7a29'],
+['modelProgrammed','Programming done (model)','#7c67a5'],
+['operationDone','Operation done','#146647'],
+['impending','WB impending','#ba5050']
+];
+function flag(row,key){if(key==='memoryLut')return row.memoryFire&&row.memoryLut;if(key==='memoryWeight')return row.memoryFire&&!row.memoryLut;return row[key];}
+function draw(){
+  if(!rows.length)return;
+  const ratio=window.devicePixelRatio||1,w=canvas.clientWidth,h=370;
+  canvas.width=Math.max(1,Math.round(w*ratio));canvas.height=h*ratio;ctx.setTransform(ratio,0,0,ratio,0,0);
+  ctx.clearRect(0,0,w,h);ctx.fillStyle='#fbfdff';ctx.fillRect(0,0,w,h);
+  const left=Math.min(185,w*0.42),right=12,top=24,plot=Math.max(20,w-left-right),height=23;
+  const begin=rows[0].cycle,end=rows[rows.length-1].cycle,span=Math.max(1,end-begin);
+  const x=r=>left+(r.cycle-begin)/span*plot;
+  ctx.font='11px system-ui';ctx.fillStyle='#61758a';
+  for(let i=0;i<=4;i++){const px=left+plot*i/4;ctx.strokeStyle='#e2eaf3';ctx.beginPath();ctx.moveTo(px,top-5);ctx.lineTo(px,320);ctx.stroke();ctx.fillText(String(Math.round(begin+span*i/4)),px-10,14);}
+  lanes.forEach((lane,index)=>{
+    const y=top+index*height;ctx.fillStyle='#516b85';ctx.fillText(lane[1],8,y+12);ctx.fillStyle=lane[2];
+    rows.forEach(row=>{if(flag(row,lane[0]))ctx.fillRect(x(row),y+3,Math.max(1,plot/span),12);});
+  });
+  const yBase=342;ctx.fillStyle='#516b85';ctx.fillText('Used + reserved / 16KiB',8,324);
+  ctx.strokeStyle='#4386ba';ctx.beginPath();
+  rows.forEach((r,i)=>{const y=yBase-(16384-r.freeBytes)/16384*22;if(i===0)ctx.moveTo(x(r),y);else ctx.lineTo(x(r),y);});ctx.stroke();
+  const selected=rows[position];ctx.strokeStyle='#172f4c';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x(selected),top-6);ctx.lineTo(x(selected),350);ctx.stroke();
+}
+function inspect(){
+  if(!rows.length)return;
+  position=Math.max(0,Math.min(rows.length-1,position));el('position').value=String(position);
+  const r=rows[position];el('sample-title').textContent='Cycle '+r.cycle+(r.contextId!==undefined?' · Context '+r.contextId:'');
+  el('sample').textContent=JSON.stringify(r,null,2);draw();
+}
+function stop(){if(timer)clearInterval(timer);timer=null;el('play').textContent='재생';}
+function choose(){
+  stop();active=report.cases[Number(el('case-select').value)];if(!active)return;
+  el('case-description').textContent=active.description;
+  el('case-scope').textContent='명세 '+active.requirements.join(', ')+'번 · 독립 검사 '+(active.verified?'PASS':'FAIL')+(active.auditErrors.length?' · '+active.auditErrors.join('; '):'');
+  el('raw-link').href=active.evidencePath;
+  el('metrics').textContent=JSON.stringify(active.metrics,null,2);
+  rows=active.samples.filter(r=>r.event==='cycle'||r.event==='writer');position=0;
+  el('explorer').hidden=!rows.length;el('unit-details').hidden=Boolean(rows.length);
+  ['previous','next','play','speed'].forEach(id=>el(id).disabled=!rows.length);
+  if(rows.length){el('position').max=String(rows.length-1);inspect();}
+  else el('unit-details').textContent=JSON.stringify(active.samples,null,2);
+}
+el('case-select').innerHTML=report.cases.map((c,i)=>'<option value="'+i+'">'+esc(c.id)+' · '+(c.verified?'PASS':'FAIL')+'</option>').join('');
+const first=report.cases.findIndex(c=>c.id==='lut-commit-transition');if(first>=0)el('case-select').value=String(first);
+el('case-select').addEventListener('change',choose);
+el('position').addEventListener('input',()=>{position=Number(el('position').value);inspect();});
+el('previous').addEventListener('click',()=>{position--;inspect();});
+el('next').addEventListener('click',()=>{position++;inspect();});
+el('play').addEventListener('click',()=>{if(timer){stop();return;}el('play').textContent='정지';timer=setInterval(()=>{position+=Number(el('speed').value);if(position>=rows.length-1){position=rows.length-1;stop();}inspect();},120);});
+canvas.addEventListener('click',event=>{if(!rows.length)return;const rect=canvas.getBoundingClientRect(),left=Math.min(185,rect.width*0.42),fraction=Math.max(0,Math.min(1,(event.clientX-rect.left-left)/(rect.width-left-12)));const cycle=rows[0].cycle+(rows[rows.length-1].cycle-rows[0].cycle)*fraction;position=rows.reduce((best,r,i)=>Math.abs(r.cycle-cycle)<Math.abs(rows[best].cycle-cycle)?i:best,0);inspect();});
+window.addEventListener('resize',draw);
+document.addEventListener('keydown',event=>{if(event.target.tagName==='SELECT'||!rows.length)return;if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();position+=event.key==='ArrowRight'?1:-1;inspect();}});
+choose();
+document.documentElement.dataset.reportReady='true';
+</script>
+</html>

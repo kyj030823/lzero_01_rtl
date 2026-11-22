@@ -1,0 +1,109 @@
+[36mRun starting. Expected test count is: 51[0m
+[32mWeightBufferContextSpec:[0m
+[32mWeightBufferController context control[0m
+CONFIG MATRIX: 34 explicit specification cases
+[32m- should validate explicit modes, shape, alignment and capacity without truncating arithmetic (2 seconds, 625 milliseconds)[0m
+[32m- should latch all settings and accept a held next request only after the current context ends (280 milliseconds)[0m
+[32m- should keep an active context through idle gaps and every pending-response combination (315 milliseconds)[0m
+COMPLETION ORDERS: 6 legal sequences
+[32m- should remember independent compute and LUT completion pulses in all legal relative orders (237 milliseconds)[0m
+[32m- should handle disabled, constant, zero-length and LUT-only contexts without waiting for absent data (261 milliseconds)[0m
+[32m- should clear safely on softReset and give reset priority over a simultaneous contextStart (227 milliseconds)[0m
+[32m- should honor system reset and ignore old completion pulses while no context is active (181 milliseconds)[0m
+[32m- should preserve sum carry in a legal STREAM context above the default 32-bit payload range (217 milliseconds)[0m
+[32m- should support wider payload, count and identity parameters (185 milliseconds)[0m
+[32m- should preserve carry with the minimum payload width (154 milliseconds)[0m
+LIFECYCLE SCOREBOARD: 100 contexts, 1274 checked cycles
+[32m- should match a seeded context-lifecycle scoreboard across completion and drain timing (924 milliseconds)[0m
+Assertion failed: WB VPU_DIRECT requires STREAM
+    at WeightBufferController.scala:263 assert(vpuModeValid, "WB VPU_DIRECT requires STREAM")
+Assertion failed: WB local weight cache must fit in 16KiB
+    at WeightBufferController.scala:269 assert(cacheCapacityValid, "WB local weight cache must fit in 16KiB")
+[32m- should assert rather than accept an invalid start: VPU cache (130 milliseconds)[0m
+Assertion failed: WB non-fusion requires weightSet1Bytes == 0
+    at WeightBufferController.scala:264 assert(weightSetsValid, "WB non-fusion requires weightSet1Bytes == 0")
+[32m- should assert rather than accept an invalid start: non-fusion set1 (161 milliseconds)[0m
+Assertion failed: WB compute payload must be 16B aligned
+    at WeightBufferController.scala:265 assert(computeAlignmentValid, "WB compute payload must be 16B aligned")
+[32m- should assert rather than accept an invalid start: compute alignment (175 milliseconds)[0m
+Assertion failed: WB LUT payload must be 16B aligned
+    at WeightBufferController.scala:266 assert(lutAlignmentValid, "WB LUT payload must be 16B aligned")
+[32m- should assert rather than accept an invalid start: LUT alignment (139 milliseconds)[0m
+Assertion failed: WB impending threshold must be 16B aligned
+    at WeightBufferController.scala:267 assert(thresholdValid, "WB impending threshold must be 16B aligned")
+[32m- should assert rather than accept an invalid start: threshold alignment (152 milliseconds)[0m
+Assertion failed: WB GEMM shape/replay count does not match its payload
+    at WeightBufferController.scala:268 assert(gemmShapeValid, "WB GEMM shape/replay count does not match its payload")
+[32m- should assert rather than accept an invalid start: GEMM replay (148 milliseconds)[0m
+Assertion failed: WB GEMM shape/replay count does not match its payload
+    at WeightBufferController.scala:268 assert(gemmShapeValid, "WB GEMM shape/replay count does not match its payload")
+[32m- should assert rather than accept an invalid start: GEMM dense shape (185 milliseconds)[0m
+Assertion failed: WB local weight cache must fit in 16KiB
+    at WeightBufferController.scala:269 assert(cacheCapacityValid, "WB local weight cache must fit in 16KiB")
+[32m- should assert rather than accept an invalid start: cache capacity (208 milliseconds)[0m
+Assertion failed: WB softReset requires DMA/read/output responses to be drained
+    at WeightBufferController.scala:272 assert(allPathsDrained, "WB softReset requires DMA/read/output responses to be drained")
+[32m- should reject softReset with an outstanding DMA response (206 milliseconds)[0m
+Assertion failed: WB softReset requires DMA/read/output responses to be drained
+    at WeightBufferController.scala:272 assert(allPathsDrained, "WB softReset requires DMA/read/output responses to be drained")
+[32m- should reject softReset with an outstanding SRAM response (198 milliseconds)[0m
+Assertion failed: WB softReset requires DMA/read/output responses to be drained
+    at WeightBufferController.scala:272 assert(allPathsDrained, "WB softReset requires DMA/read/output responses to be drained")
+[32m- should reject softReset with an outstanding output response (182 milliseconds)[0m
+[32mWeightBufferLutSpec:[0m
+[32mWeightBufferDataPath LUT streaming[0m
+LUT CASE: lut=16B weight=0B passes=1 cache=false cycles=9 LUT beats=1 compute beats=0 weight requests=0 overlap=false handoff/output=false reserved-response-while-full=false
+LUT CASE: lut=32B weight=0B passes=1 cache=false cycles=11 LUT beats=2 compute beats=0 weight requests=0 overlap=false handoff/output=false reserved-response-while-full=false
+LUT CASE: lut=48B weight=0B passes=1 cache=false cycles=12 LUT beats=3 compute beats=0 weight requests=0 overlap=false handoff/output=false reserved-response-while-full=false
+LUT CASE: lut=80B weight=0B passes=1 cache=false cycles=14 LUT beats=5 compute beats=0 weight requests=0 overlap=false handoff/output=true reserved-response-while-full=false
+[32m- should stream LUT tail masks and restart without stale data (5 seconds, 684 milliseconds)[0m
+[32m- should reject uncredited, over-credited, stale, wrong-kind and sparse-mask input without progress (2 seconds, 297 milliseconds)[0m
+LUT CASE: lut=48B weight=256B passes=1 cache=false cycles=25 LUT beats=3 compute beats=16 weight requests=1 overlap=true handoff/output=false reserved-response-while-full=false
+[32m- should cancel a partially received LUT after credits and read responses drain (2 seconds, 614 milliseconds)[0m
+Assertion failed: WB softReset requires DMA/read/output responses to be drained
+    at WeightBufferController.scala:272 assert(allPathsDrained, "WB softReset requires DMA/read/output responses to be drained")
+[32m- should reject softReset while a LUT credit still promises incoming data (1 second, 307 milliseconds)[0m
+Assertion failed: WB LUT credit must be a positive aligned window within ring capacity
+    at WeightBufferDataPath.scala:456 assert(lutCreditLengthValid, "WB LUT credit must be a positive aligned window within ring capacity")
+[32m- should assert for an invalid LUT credit window of 0 bytes (1 second, 514 milliseconds)[0m
+Assertion failed: WB LUT credit must be a positive aligned window within ring capacity
+    at WeightBufferDataPath.scala:456 assert(lutCreditLengthValid, "WB LUT credit must be a positive aligned window within ring capacity")
+[32m- should assert for an invalid LUT credit window of 17 bytes (1 second, 421 milliseconds)[0m
+Assertion failed: WB LUT credit must be a positive aligned window within ring capacity
+    at WeightBufferDataPath.scala:456 assert(lutCreditLengthValid, "WB LUT credit must be a positive aligned window within ring capacity")
+[32m- should assert for an invalid LUT credit window of 16400 bytes (2 seconds, 401 milliseconds)[0m
+[32mWeightBufferPrefillSpec:[0m
+[32mWB context prefill[0m
+[32m- should keep LUT, final-use CACHE and prefetched CACHE in one FIFO without mixing outputs (4 seconds, 888 milliseconds)[0m
+[32m- should prefill CACHE behind STREAM and preserve ready data across activation with wide identities (5 seconds, 967 milliseconds)[0m
+[32m- should hand the single cache descriptor to the next CACHE only on the final pass (6 seconds, 107 milliseconds)[0m
+[32m- should activate a prefetched STREAM with a response outstanding and reject stale context responses (1 minute, 15 seconds)[0m
+[32m- should resume next CACHE refill after final drain returns at least 4KiB (1 minute, 57 seconds)[0m
+[32m- should reject unsupported or ambiguous prefill and require the approved configuration at activation (3 seconds, 174 milliseconds)[0m
+[32m- should keep a next CACHE descriptor when prefill coincides with the previous final output (3 seconds, 412 milliseconds)[0m
+[32m- should start a fresh LUT at the previous tail without resetting the normal FIFO (6 seconds, 912 milliseconds)[0m
+[32m- should flush both queued contexts after all responses are drained (4 seconds, 643 milliseconds)[0m
+[32m- should block the fifth metadata entry even when more than 4KiB of byte space is free (7 seconds, 489 milliseconds)[0m
+[32m- should commit the final prefetched response on the context activation cycle (3 seconds, 480 milliseconds)[0m
+Assertion failed: WB softReset requires DMA/read/output responses to be drained
+    at WeightBufferController.scala:272 assert(allPathsDrained, "WB softReset requires DMA/read/output responses to be drained")
+[32m- should reject a global reset while the next context still has an outstanding response (1 second, 158 milliseconds)[0m
+[32mWeightBufferStatusSpec:[0m
+[32mWB status and completion[0m
+[32m- should report initial fill, threshold crossing, pending refill and final draining (29 seconds, 422 milliseconds)[0m
+[32m- should recognize a ready next group and never stall the final prepared tail (3 seconds, 524 milliseconds)[0m
+[32m- should exclude LUT bytes, suppress replay refill, and retain DONE after the last accepted output (3 seconds, 188 milliseconds)[0m
+[32m- should leave compute warnings disabled for LUT-only, constant and zero-length contexts (1 second, 246 milliseconds)[0m
+[32m- should count only the current pass from the accepted read pointer across extended wrap (1 minute, 5 seconds)[0m
+[32m- should finish a prepared 16B tail with compute ready driven by impending in hardware (1 second, 612 milliseconds)[0m
+[32mWeightBufferStreamOrderSpec:[0m
+[32mWB STREAM logical order[0m
+[32m- should preserve m-n-k order for three preloaded STREAM groups without output bubbles (24 seconds, 215 milliseconds)[0m
+[32m- should preserve m-n-k order through deterministic DMA and compute pauses (25 seconds, 210 milliseconds)[0m
+[32m- should preserve logical order across 4KiB and 512B refill boundaries (38 seconds, 392 milliseconds)[0m
+[32m- should reject unequal STREAM row and replay counts before context acceptance (855 milliseconds)[0m
+[36mRun completed in 7 minutes, 38 seconds.[0m
+[36mTotal number of tests run: 51[0m
+[36mSuites: completed 5, aborted 0[0m
+[36mTests: succeeded 51, failed 0, canceled 0, ignored 0, pending 0[0m
+[32mAll tests passed.[0m

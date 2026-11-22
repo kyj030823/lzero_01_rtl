@@ -1,0 +1,174 @@
+{
+  "checks": [
+    {
+      "name": "report-ready",
+      "passed": true
+    },
+    {
+      "name": "aggregate-pass",
+      "passed": true
+    },
+    {
+      "name": "62-ScalaTest-results",
+      "passed": true
+    },
+    {
+      "name": "11-audited-cases",
+      "passed": true
+    },
+    {
+      "name": "14-criteria-visible",
+      "passed": true
+    },
+    {
+      "name": "two-model-scopes-labeled",
+      "passed": true
+    },
+    {
+      "name": "three-run-groups",
+      "passed": true
+    },
+    {
+      "name": "all-test-rows",
+      "passed": true
+    },
+    {
+      "name": "integration-limit-visible",
+      "passed": true
+    },
+    {
+      "name": "view-mode-storage-mask-matrix",
+      "passed": true
+    },
+    {
+      "name": "unit-storage-mask-matrix",
+      "passed": true
+    },
+    {
+      "name": "view-mode-writer-admission",
+      "passed": true
+    },
+    {
+      "name": "sample-writer-admission",
+      "passed": true
+    },
+    {
+      "name": "view-mode-writer-simultaneous",
+      "passed": true
+    },
+    {
+      "name": "sample-writer-simultaneous",
+      "passed": true
+    },
+    {
+      "name": "view-mode-reader-metadata-hold",
+      "passed": true
+    },
+    {
+      "name": "unit-reader-metadata-hold",
+      "passed": true
+    },
+    {
+      "name": "view-mode-lut-commit-transition",
+      "passed": true
+    },
+    {
+      "name": "sample-lut-commit-transition",
+      "passed": true
+    },
+    {
+      "name": "view-mode-lut-tail-wrap",
+      "passed": true
+    },
+    {
+      "name": "sample-lut-tail-wrap",
+      "passed": true
+    },
+    {
+      "name": "view-mode-lut-entry-budget",
+      "passed": true
+    },
+    {
+      "name": "sample-lut-entry-budget",
+      "passed": true
+    },
+    {
+      "name": "view-mode-full-cache-final",
+      "passed": true
+    },
+    {
+      "name": "sample-full-cache-final",
+      "passed": true
+    },
+    {
+      "name": "view-mode-special-contexts",
+      "passed": true
+    },
+    {
+      "name": "sample-special-contexts",
+      "passed": true
+    },
+    {
+      "name": "view-mode-reader-context-drain",
+      "passed": true
+    },
+    {
+      "name": "sample-reader-context-drain",
+      "passed": true
+    },
+    {
+      "name": "view-mode-programming-timings",
+      "passed": true
+    },
+    {
+      "name": "sample-programming-timings",
+      "passed": true
+    },
+    {
+      "name": "all-cases-open",
+      "passed": true
+    },
+    {
+      "name": "cache-output-metric",
+      "passed": true
+    },
+    {
+      "name": "cache-input-metric",
+      "passed": true
+    },
+    {
+      "name": "next-control",
+      "passed": true
+    },
+    {
+      "name": "keyboard-control",
+      "passed": true
+    },
+    {
+      "name": "raw-evidence-link",
+      "passed": true
+    },
+    {
+      "name": "play-start",
+      "passed": true
+    },
+    {
+      "name": "play-stop",
+      "passed": true
+    },
+    {
+      "name": "canvas-rendered",
+      "passed": true
+    },
+    {
+      "name": "no-body-horizontal-overflow",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "viewportWidth": 500,
+  "layoutWidth": 414,
+  "passed": true,
+  "sourceHtmlSha256": "e0f82318c901ff3631123c110189e9973b8c706afd61f80a6dd89858301b609e",
+  "forced414Layout": true
+}

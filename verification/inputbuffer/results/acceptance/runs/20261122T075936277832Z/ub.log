@@ -1,0 +1,14 @@
+[36mRun starting. Expected test count is: 6[0m
+[32mInputBufferAcceptanceSpec:[0m
+[32mUB remaining acceptance[0m
+[32m- should replay a full sixteen KiB row twice while forcing rewind row-handoff and simultaneous updates (3 minutes, 36 seconds)[0m
+[32m- should preserve forty-eight UB mask-bank-region combinations and physical and extended wrap (1 minute, 30 seconds)[0m
+[32m- should record a four-entry policy block despite free bytes and resume only after accepted reclaim (3 seconds, 319 milliseconds)[0m
+[32m- should accept an existing tail reservation at 4080 free while enforcing the 4096 admission edge (42 seconds, 56 milliseconds)[0m
+[32m- should normalize source split boundaries and preserve STREAM output for DRAM miss IB hit and mixed sources (45 seconds, 621 milliseconds)[0m
+[32m- should match a two-times-N fusion reference in CACHE and STREAM for both IB hits and misses (1 minute, 49 seconds)[0m
+[36mRun completed in 8 minutes, 27 seconds.[0m
+[36mTotal number of tests run: 6[0m
+[36mSuites: completed 1, aborted 0[0m
+[36mTests: succeeded 6, failed 0, canceled 0, ignored 0, pending 0[0m
+[32mAll tests passed.[0m

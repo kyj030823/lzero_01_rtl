@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-11-15T12:26:55.175796+00:00",
+  "runDirectory": "/home/kyj03/lzero_01_rtl/verification/wb-stream-order/results/runs/20261115T122654838532Z",
+  "buildDirectory": "/tmp/wb-stream-order-if4we6nq",
+  "scope": "WB + 실제 SRAM + AG 논리 공급 모형. AG DRAM/IB 주소 생성은 별도 검증.",
+  "sourceHashes": {
+    "src/main/scala/CircularBufferStorage.scala": "36b81171d82e03db0652b308995bda9d069992286551972d82b860d7d5fc15e0",
+    "src/main/scala/CircularBufferReadPath.scala": "512b80b7572e494ca37840b34d9b25249e10d48e568828abf9dbdaffa7d75c25",
+    "src/main/scala/CircularBufferWritePath.scala": "94b891db17be295105476a635bc29266aae628c168031909527aa3c51a5c0407",
+    "src/main/scala/CircularBufferCore.scala": "5f0b330906f9f3b915aaecef8a0a42ca03ddfdd66ab385cc9556122db4a1687e",
+    "src/main/scala/WeightBufferController.scala": "cd3e4ca1c52e9cf0b1d440065f4635a0384ec22c46d868c424ce8a842aea8170",
+    "src/main/scala/WeightBufferDataPath.scala": "59829bf4e29d11db8a7e6fce92d6f2d02fca90fec86a362f07b77f155d98fd1a"
+  },
+  "testSourceHash": "e62bf5e731d328f711c7ea2117b80032bbd249ebe3efc030062d8b858048fd28",
+  "versions": {
+    "scala": "2.13.12",
+    "chisel": "6.7.0",
+    "chiseltest": "6.0.0"
+  },
+  "expectedCases": [
+    "baseline",
+    "stalls",
+    "chunk-boundary",
+    "count-mismatch"
+  ],
+  "excluded": "긴 LUT 및 기존 전체 회귀는 실행하지 않음",
+  "compileExitCode": 0,
+  "testExitCode": 0,
+  "productionUnchanged": true,
+  "finishedAt": "2026-11-15T12:28:37.284169+00:00"
+}

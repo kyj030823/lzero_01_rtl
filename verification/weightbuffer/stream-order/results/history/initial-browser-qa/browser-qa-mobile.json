@@ -1,0 +1,95 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "label": "report script ready",
+      "passed": true
+    },
+    {
+      "label": "4 test cases and 1344 accepted output beats",
+      "passed": true
+    },
+    {
+      "label": "case title baseline",
+      "passed": true
+    },
+    {
+      "label": "tile count baseline",
+      "passed": true
+    },
+    {
+      "label": "case title stalls",
+      "passed": true
+    },
+    {
+      "label": "tile count stalls",
+      "passed": true
+    },
+    {
+      "label": "case title chunk-boundary",
+      "passed": true
+    },
+    {
+      "label": "tile count chunk-boundary",
+      "passed": true
+    },
+    {
+      "label": "case title count-mismatch",
+      "passed": true
+    },
+    {
+      "label": "config reject/allow rows",
+      "passed": true
+    },
+    {
+      "label": "tile filter selects 16 matching output beats",
+      "passed": true
+    },
+    {
+      "label": "tile click zooms timeline",
+      "passed": true
+    },
+    {
+      "label": "tile filter reset",
+      "passed": true
+    },
+    {
+      "label": "stall filter populated",
+      "passed": true
+    },
+    {
+      "label": "stall inspector shows held valid data",
+      "passed": true
+    },
+    {
+      "label": "inspector compares actual hex data",
+      "passed": true
+    },
+    {
+      "label": "4KiB boundary requests remain visible",
+      "passed": true
+    },
+    {
+      "label": "keyboard cycle navigation",
+      "passed": true
+    },
+    {
+      "label": "playback advances observed cycles",
+      "passed": true
+    },
+    {
+      "label": "playback pause",
+      "passed": true
+    },
+    {
+      "label": "414px layout fits without overflow",
+      "passed": true
+    },
+    {
+      "label": "no runtime error",
+      "passed": true
+    }
+  ],
+  "viewportWidth": 500,
+  "layoutWidth": 414
+}

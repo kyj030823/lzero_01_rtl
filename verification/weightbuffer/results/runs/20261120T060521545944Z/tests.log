@@ -1,0 +1,15 @@
+[36mRun starting. Expected test count is: 7[0m
+[32mWeightBufferAcceptanceSpec:[0m
+[32mWB v3 acceptance[0m
+[32m- should stop at committed LUT bytes then request weight on the next clock and overlap both ports (9 seconds, 6 milliseconds)[0m
+[32m- should preserve every LUT tail at ordinary physical and extended wrap boundaries (1 minute, 38 seconds)[0m
+[32m- should count a held LUT in the same four-entry budget and resume after its release (5 seconds, 295 milliseconds)[0m
+[32m- should fill exactly sixteen KiB once and replay three passes continuously until final acceptance (2 minutes, 17 seconds)[0m
+[32m- should keep disabled constant and zero-length contexts independent of LUT-only initialization (5 seconds, 186 milliseconds)[0m
+[32m- should drain a held SRAM response before accepting a different context (3 seconds, 374 milliseconds)[0m
+[32m- should separate real WB completion from modeled programming and central holding in five timing orders (15 seconds, 790 milliseconds)[0m
+[36mRun completed in 4 minutes, 35 seconds.[0m
+[36mTotal number of tests run: 7[0m
+[36mSuites: completed 1, aborted 0[0m
+[36mTests: succeeded 7, failed 0, canceled 0, ignored 0, pending 0[0m
+[32mAll tests passed.[0m

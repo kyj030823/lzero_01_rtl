@@ -1,0 +1,12 @@
+[36mRun starting. Expected test count is: 4[0m
+[32mWeightBufferStreamOrderSpec:[0m
+[32mWB STREAM logical order[0m
+[32m- should preserve m-n-k order for three preloaded STREAM groups without output bubbles (23 seconds, 951 milliseconds)[0m
+[32m- should preserve m-n-k order through deterministic DMA and compute pauses (21 seconds, 571 milliseconds)[0m
+[32m- should preserve logical order across 4KiB and 512B refill boundaries (35 seconds, 256 milliseconds)[0m
+[32m- should reject unequal STREAM row and replay counts before context acceptance (2 seconds, 130 milliseconds)[0m
+[36mRun completed in 1 minute, 23 seconds.[0m
+[36mTotal number of tests run: 4[0m
+[36mSuites: completed 1, aborted 0[0m
+[36mTests: succeeded 4, failed 0, canceled 0, ignored 0, pending 0[0m
+[32mAll tests passed.[0m

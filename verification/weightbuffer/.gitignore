@@ -1,0 +1,3 @@
+__pycache__/
+/results/runs/*/work/
+/results/layout-checks/*/work/

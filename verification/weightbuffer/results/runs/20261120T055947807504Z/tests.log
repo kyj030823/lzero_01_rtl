@@ -1,0 +1,12 @@
+[36mRun starting. Expected test count is: 4[0m
+[32mCircularBufferBoundarySpec:[0m
+[32mCircular buffer boundaries[0m
+[32m- should steer every prefix mask from every bank across physical and extended wrap (4 seconds, 326 milliseconds)[0m
+[32m- should enforce four KiB admission reserved responses and the shared entry limit (3 seconds, 410 milliseconds)[0m
+[32m- should apply concurrent credit ingress reclaim allocation and release exactly once (508 milliseconds)[0m
+[32m- should hold issued metadata through a delayed response and seek only when the old beat is accepted (215 milliseconds)[0m
+[36mRun completed in 8 seconds, 693 milliseconds.[0m
+[36mTotal number of tests run: 4[0m
+[36mSuites: completed 1, aborted 0[0m
+[36mTests: succeeded 4, failed 0, canceled 0, ignored 0, pending 0[0m
+[32mAll tests passed.[0m

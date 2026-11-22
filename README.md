@@ -134,3 +134,12 @@ Verilog 생성: 터미널에서 make gen 명령어를 실행합니다.
 메모리 할당: Docker Desktop 설정에서 최소 4GB~8GB 이상의 RAM을 할당해야 로켓칩 빌드 시 OutOfMemory 에러가 발생하지 않습니다.
 
 CPU 아키텍처 호환성: 본 환경은 Windows/Intel 및 Apple Silicon(M1/M2) 아키텍처 호환성을 모두 지원하도록 설계되었습니다.
+
+
+## WB v3 검증
+
+실행 방법과 정리된 결과는 [WB 검증 안내](verification/weightbuffer/README.md)를 참고하세요. 제품 소스는 src/main/scala/commonbuffer와 src/main/scala/weightbuffer에, 테스트 소스는 src/test/scala/weightbuffer에 모았습니다.
+
+## UB v3 구현·검증
+
+UB 전용 소스는 src/main/scala/inputbuffer에 두고 공용 버퍼를 재사용합니다. 설정·입출력·row cache 및 최소 시험 실행 방법은 [UB 검증 안내](verification/inputbuffer/README.md)를 참고하세요.
