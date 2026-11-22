@@ -131,3 +131,70 @@ python3 verification/weightbuffer/tools/check_report.py
 ## UB group handoff 추가 이후의 검증 범위
 
 2026-11-22에 UB의 같은 context 내 row overlap을 위해 공용 Core/WritePath가 확장됐다. WB는 enableGroupPrefill=false를 유지하고 WB 전용 RTL은 바뀌지 않았다. 이번 revision에서는 [UB 최소 검증](../inputbuffer/README.md)의 WB smoke 2개를 확인했다. 이 문서의 기존 62개 결과는 확장 전 소스 hash에 대한 기록이며 전체 회귀를 다시 실행한 결과가 아니다. 기존 원본 run.json은 그대로 보존한다.
+
+## 명세서 11장 항목별 검증 설명
+
+정리 기준일은 2026-11-22다. 아래 표는 저장된 실행 기록을 설명하며, 이 문서를 추가하면서 테스트나 컴파일을 실행하지 않았다.
+
+WB 종합 검증은 2026-11-20에 62개가 모두 통과했다. 이후 UB의 group handoff를 위해 공용 Core/WritePath가 바뀌었으므로 이 62개를 현재 revision 전체 통과로 표시하지 않는다. 변경 후에는 WB 핵심 시험 2개와 공용 경계 시험 4개가 통과했다. WB 전용 RTL 두 파일의 내용은 유지됐다.
+
+| 번호 | 명세서 요구사항 | 실제 확인한 내용과 결과 |
+| --- | --- | --- |
+| 1 | Normal STREAM의 m→n→k 및 weightReplayCount=inputRowCount | 통과. M=3, N=2, K=4에서 데이터와 순서를 비교했다. DMA/compute 정지 및 4KiB+512B 경계에서도 순서가 유지됐다. M과 replay count가 다른 설정은 거부했다. |
+| 2 | Full-cache unique fill 후 hungry 억제와 M-group replay | 통과. 16KiB를 한 번 공급하고 3pass, 16B 출력 3,072개를 확인했다. Unique fill 이후 hungry/추가 refill을 억제하고 중간 pass에서 공간을 보존했다. |
+| 3 | W1+W2 합계로 cache mode 검증 | 통과. W1=12KiB, W2=12KiB이면 합계 24KiB이므로 cache 설정을 거부했다. 합산 carry가 잘려 작은 용량으로 오판하지 않는지도 확인했다. |
+| 4 | First-pass fused logical order 재생 및 source split과 phase 분리 | 미실행. 요청에 따라 제외했다. 3번의 합산 용량 설정 검사는 fusion 출력 순서 검증과 별개다. |
+| 5 | LUT 조기 streaming 및 committed bytes 초과 read 금지 | 통과. 64B만 받은 상태에서 16B 4beat를 출력하고 추가 수신 전에는 멈췄다. SRAM read도 committed 범위를 넘지 않았다. |
+| 6 | LUT 수신 종료 직후 weight 요청 가능 및 LUT output/weight ingress overlap | 통과. LUT 마지막 입력 수락 다음 clock에 요청 가능 상태가 됐고, LUT 출력과 weight 입력의 동시 수락을 확인했다. |
+| 7 | LUT tail과 첫 weight의 kind·mask·순서 보존 | 통과. LUT 80/96/112/128B tail과 실제 traffic에 의한 물리/확장 ring wrap에서 데이터가 섞이지 않았다. |
+| 8 | Receive/stream/programming/첫 weight 준비의 서로 다른 timing | 외부 모형 연결 시험 통과. W-S-P, S-W-P, S-P-W, S-W=P, S=W-P의 5가지 순서를 확인했다. 실제 programming unit은 미연결이다. |
+| 9 | Central holding/compute pause 중 DMA·LUT programming 진행 | 외부 모형 연결 시험 통과. Compute 대기 중에도 DMA와 LUT 경로가 진행됐다. 실제 CCU/programming unit과의 통합 시험은 별도다. |
+| 10 | Mask·wrap·bank steering·full·예약·4-entry·동시 update | 통과. Mask 4종×시작 bank 4종×주소 위치 3종의 48조합, 이웃 데이터 384회 비교, 동시 read/write 16조합을 확인했다. Free 4096/4080B, 예약 응답, 5번째 entry 차단 및 동시 갱신도 검사했다. |
+| 11 | LUT last에서 ring reset 없음 및 LUT bytes를 weight 준비에 합산하지 않음 | 통과. LUT 이후 같은 ring pointer에서 이어 공급했고, LUT만 받은 상태를 첫 weight chunk 준비로 오판하지 않았다. |
+| 12 | Disabled/constant/zero-length의 compute impending 억제 및 LUT-only 허용 | 통과. 세 조건×LUT 유무의 6조합에서 불필요한 weight 요청·compute 출력·impending을 억제하고 필요한 LUT-only 초기화를 진행했다. |
+| 13 | Last supply와 last consumption 분리 및 premature operationDone 금지 | 통과. 수신 완료 후에도 cache replay를 마칠 때까지 완료하지 않았다. 최종 출력 5clock hold 뒤 실제 수락에서만 operationDone이 1회 발생했다. |
+| 14 | SRAM 응답 hold·context drain·최종 소비 이후 impending 억제 | 통과. 응답을 5clock 유지해 data/metadata가 보존되는지 확인했다. 이전 read/output을 drain한 뒤 context를 전환하고 마지막 소비 후 불필요한 impending을 억제했다. |
+
+1번은 AG 모형의 논리 공급 순서를 실제 WB가 보존하는지 확인한 범위다. 실제 AG의 DRAM/IB 주소 생성은 미검증이다. 6번의 수신 종료는 WB의 memoryChunkLast 수락 기준이며, physical AXI RLAST를 logical chunk 종료로 바꾸는 제품 adapter는 별도다. 긴 LUT 확장 조합 6개도 제외했다.
+
+원본 결과는 [WB HTML 보고서](results/index.html), [WB 결과 JSON](results/report.json), 변경 후 WB 2개 결과는 [UB 최소 검증 요약](../inputbuffer/results/summary.json), 공용 4개 재실행은 [UB 추가 검증 요약](../inputbuffer/results/acceptance/summary.md)에서 확인한다.
+
+### 응답을 5clock 보관했다는 의미
+
+SRAM에서 읽어온 응답을 받는 쪽이 수락하지 않도록 ready=0으로 두고 5clock 유지했다는 뜻이다. SRAM 자체의 read latency는 1clock이다. 읽기 발행을 막는 readEnable과 이미 나온 출력을 수락하는 ready는 역할이 다르다.
+
+| 구간 | valid | ready | 기대 동작 |
+| --- | --- | --- | --- |
+| 응답 보관 5clock | 1 | 0 | Data, last, context/tag/group metadata 유지. 소비와 완료 처리 보류 |
+| 이후 수락 clock | 1 | 1 | 보관한 응답을 한 번 전달하고 소비 처리 |
+
+소비 기준 readPtr는 응답을 보관하는 동안 전진하지 않는다. 최종 데이터도 실제 수락 전에는 operationDone을 발생시키지 않는다.
+
+### LUT programming의 의미
+
+Programming은 WB가 공급한 LUT 데이터를 CU 내부 LUT 테이블에 기록해 연산에 사용할 수 있도록 준비하는 과정이다.
+
+외부 메모리 → WB → LUT programming unit → CU 내부 LUT
+
+- LUT receive 완료: 외부 메모리에서 WB로 전부 받았다.
+- LUT stream 완료: WB에서 programming unit으로 전부 전달했다.
+- LUT programming 완료: 내부 테이블 기록과 준비를 마쳤다. 상위에서 lutProgrammingDone으로 알린다.
+
+시험의 S는 LUT stream 완료, P는 programming 완료, W는 첫 weight chunk 완료다. Programming unit과 CCU는 외부 동작 모형으로 표현했으며 실제 장치가 연결됐다는 의미는 아니다.
+
+## Cache 교체 경로 코드 검토
+
+2026-11-22에 코드를 읽어 검토한 내용이다. 이 검토를 위해 새 테스트나 컴파일을 실행하거나 RTL을 수정하지 않았다.
+
+WB는 현재 context A의 마지막 사용 중 다음 context B를 선행 적재한다. UB의 같은 context 내 row 전환과 공간을 재사용하는 원리는 같고, WB는 contextId로 소속을 구분한다. Core의 enableContextPrefill=true, enableGroupPrefill=false를 사용하며 cache descriptor는 한 벌이다.
+
+1. 현재 공급이 끝나고 cache의 마지막 pass일 때 다음 context prefill을 허용한다. Core도 진행 중 refill이 없고 기존 cache가 교체 가능한지 확인한다.
+2. 다음 CACHE이면 prefill 승인과 descriptor 교체를 같은 clock에 확정한다. 다음 context 설정을 저장한 뒤 공급 카운터를 B용으로 사용하고, A의 읽기 cursor와 chunk 정보는 유지한다.
+3. Descriptor가 B 소유가 되면 남은 A chunk는 contextId가 달라 cache replay 대상에서 빠진다. A는 마지막 사용이므로 소비한 chunk부터 공간과 entry를 반환한다.
+4. 실제 B refill은 여유 공간 4KiB 이상과 빈 entry가 있어야 승인된다. 미소비 A 영역에 덮어쓰도록 허용하지 않는다.
+5. A의 마지막 출력과 descriptor 교체가 겹쳐도 Core의 이전 pass 상태 갱신은 cacheConfigurationFire로 차단한다. WB의 출력 pass 판정도 nextConfigValid일 때 A의 최종 pass를 유지한다.
+6. B 활성화 시에는 이전 reader가 drain됐는지 확인한다. 선행 적재된 B가 CACHE이면 preserveCacheOnActivate로 B의 cache 상태와 SRAM 데이터를 보존한다.
+
+코드 검토상 현재 지원하는 A→B cache 교체에서 상태가 섞일 명백한 경로는 발견하지 못했다. 다음 데이터가 준비되지 않았거나 공간/entry가 부족하면 대기한다. 이 검토는 전체 WB 회귀 62개를 현재 revision에서 재실행한 결과를 대신하지 않는다. 현재 prefill은 서로 다른 contextId와 유효한 다음 compute 설정을 요구하며, 유효한 LUT 초기화가 필요한 다음 context는 prefill 대상으로 받지 않는다.
+
+관련 코드: [WB prefill 조건·설정](../../src/main/scala/weightbuffer/WeightBufferDataPath.scala#L184), [WB 출력 pass 판정](../../src/main/scala/weightbuffer/WeightBufferDataPath.scala#L323), [Core cache 교체](../../src/main/scala/commonbuffer/CircularBufferCore.scala#L181), [동시 교체 보호](../../src/main/scala/commonbuffer/CircularBufferCore.scala#L403).
